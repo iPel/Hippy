@@ -29,6 +29,10 @@ public class HippyViewPagerAdapter extends ViewPagerAdapter {
 
   private static final String TAG = "HippyViewPagerAdapter";
 
+  private static final int MIN_LOOP_SIZE = 4;
+  private static final int LOOP_COUNT_FACTOR = 1000;
+  private static final int INIT_ITEM_FACTOR = 100;
+
   protected final List<View> mViews = new ArrayList<>();
 
   private int mChildSize = 0;
@@ -37,8 +41,18 @@ public class HippyViewPagerAdapter extends ViewPagerAdapter {
 
   protected final HippyViewPager mViewPager;
 
+  private boolean mLoop;
+
   public HippyViewPagerAdapter(HippyInstanceContext context, HippyViewPager viewPager) {
     mViewPager = viewPager;
+  }
+
+  protected void setLoop(boolean loop) {
+    mLoop = loop;
+  }
+
+  private boolean enableLoop() {
+    return mLoop && getItemViewSize() >= MIN_LOOP_SIZE;
   }
 
   public void setChildSize(int size) {
@@ -94,6 +108,10 @@ public class HippyViewPagerAdapter extends ViewPagerAdapter {
 
   @Override
   public int getCount() {
+    if (enableLoop()) {
+      return mChildSize * LOOP_COUNT_FACTOR;
+    }
+
     return mChildSize;
   }
 
@@ -111,6 +129,8 @@ public class HippyViewPagerAdapter extends ViewPagerAdapter {
 
   @Override
   public Object instantiateItem(ViewGroup container, int position) {
+    position = tryToUpdatePos(position);
+
     View viewWrapper = null;
     if (position < mViews.size()) {
       viewWrapper = mViews.get(position);
@@ -126,8 +146,18 @@ public class HippyViewPagerAdapter extends ViewPagerAdapter {
     return viewWrapper;
   }
 
+  private int tryToUpdatePos(int position) {
+    if (enableLoop()) {
+      return position % getItemViewSize();
+    }
+    return position;
+  }
+
   @Override
   public int getInitialItemIndex() {
+    if (enableLoop()) {
+      return mInitPageIndex + getItemViewSize() * INIT_ITEM_FACTOR;
+    }
     return mInitPageIndex;
   }
 
