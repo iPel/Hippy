@@ -24,8 +24,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import com.tencent.mtt.hippy.HippyEngineContext;
+import com.tencent.mtt.hippy.HippyGlobalConfigs;
 import com.tencent.mtt.hippy.HippyInstanceContext;
 import com.tencent.mtt.hippy.HippyRootView;
+import com.tencent.mtt.hippy.adapter.dt.HippyDtAdapter;
 import com.tencent.mtt.hippy.annotation.HippyControllerProps;
 import com.tencent.mtt.hippy.common.HippyArray;
 import com.tencent.mtt.hippy.common.HippyMap;
@@ -623,6 +625,53 @@ public abstract class HippyViewController<T extends View & HippyViewBase> implem
 
   }
 
+  @HippyControllerProps(name = "dtPage", defaultType = HippyControllerProps.MAP)
+  public void setDtPage(T view, HippyMap params) {
+    HippyDtAdapter dtAdapter = getDtAdapter(view.getContext());
+    if (dtAdapter == null) {
+      return;
+    }
+    dtAdapter.setDtPage(view, params);
+  }
+
+  @HippyControllerProps(name = "dtElement", defaultType = HippyControllerProps.MAP)
+  public void setDtElement(T view, HippyMap params) {
+    HippyDtAdapter dtAdapter = getDtAdapter(view.getContext());
+    if (dtAdapter == null) {
+      return;
+    }
+    dtAdapter.setDtElement(view, params);
+  }
+
+  @HippyControllerProps(name = "dtElementVParent", defaultType = HippyControllerProps.ARRAY)
+  public void setDtElementVParent(T view, HippyArray params) {
+    HippyDtAdapter dtAdapter = getDtAdapter(view.getContext());
+    if (dtAdapter == null) {
+      return;
+    }
+
+    dtAdapter.setDtElementVParent(view, params);
+  }
+
+  public static HippyDtAdapter getDtAdapter(Context context) {
+    if (!(context instanceof HippyInstanceContext)) {
+      return null;
+    }
+
+    HippyInstanceContext instanceContext = (HippyInstanceContext) context;
+    HippyEngineContext engineContext = instanceContext.getEngineContext();
+    if (engineContext == null) {
+      return null;
+    }
+
+    HippyGlobalConfigs globalConfigs = engineContext.getGlobalConfigs();
+    if (globalConfigs == null) {
+      return null;
+    }
+
+    return globalConfigs.getDtAdapter();
+  }
+
   protected void setGestureType(T view, String type, boolean flag) {
     if (flag) {
       if (view.getGestureDispatcher() == null) {
@@ -734,5 +783,33 @@ public abstract class HippyViewController<T extends View & HippyViewBase> implem
       //file:sdcard/hippy/feeds/index.android.jsbundle
     }
     return path;
+  }
+
+  /**
+   * 拦截方法调用，若返回true，则不再继续分发
+   *
+   * @param view
+   * @param functionName
+   * @param var
+   * @return
+   */
+  public boolean interceptFunctionEvent(T view, String functionName, HippyArray var) {
+    switch (functionName) {
+      case "setDtElement":
+        setDtElement(view, var.getMap(0));
+        break;
+      case "setDtPage":
+        setDtPage(view, var.getMap(0));
+        break;
+      case "traversePage":
+        HippyDtAdapter dtAdapter = getDtAdapter(view.getContext());
+        if (dtAdapter != null) {
+          dtAdapter.traversePage(view, var.getMap(0));
+        }
+        break;
+      default:
+        return false;
+    }
+    return true;
   }
 }

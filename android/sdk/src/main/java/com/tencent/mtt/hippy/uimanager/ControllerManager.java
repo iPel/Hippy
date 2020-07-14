@@ -265,8 +265,16 @@ public class ControllerManager implements HippyInstanceLifecycleEventListener {
     HippyViewController hippyViewController = mControllerRegistry.getViewController(className);
     View view = mControllerRegistry.getView(id);
     if (!promise.isCallback()) {
+      if (hippyViewController.interceptFunctionEvent(view, functionName, var)) {
+        return;
+      }
+
       hippyViewController.dispatchFunction(view, functionName, var);
     } else {
+      if (hippyViewController.interceptFunctionEvent(view, functionName, var)) {
+        return;
+      }
+
       hippyViewController.dispatchFunction(view, functionName, var, promise);
     }
 

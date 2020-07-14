@@ -24,6 +24,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import com.tencent.mtt.hippy.HippyEngineContext;
 import com.tencent.mtt.hippy.HippyInstanceContext;
+import com.tencent.mtt.hippy.adapter.dt.HippyDtAdapter;
+import com.tencent.mtt.hippy.uimanager.HippyViewController;
 import com.tencent.mtt.hippy.uimanager.NativeGestureDispatcher;
 import com.tencent.mtt.hippy.uimanager.NativeGestureProcessor;
 
@@ -118,6 +120,7 @@ public class HippyNativeGestureSpan implements NativeGestureProcessor.Callback {
               NativeGestureDispatcher.handleLongClick(mContext, mTagId);
             } else {
               NativeGestureDispatcher.handleClick(view, mContext, mTagId, true);
+              onDtElementClick(view);
             }
           }
         }
@@ -182,4 +185,14 @@ public class HippyNativeGestureSpan implements NativeGestureProcessor.Callback {
       }
     }
   }
+
+  private void onDtElementClick(View view) {
+    HippyDtAdapter dtAdapter = HippyViewController.getDtAdapter(view.getContext());
+    if (dtAdapter == null) {
+      return;
+    }
+
+    dtAdapter.onDtElementClick(view, null);
+  }
+
 }
