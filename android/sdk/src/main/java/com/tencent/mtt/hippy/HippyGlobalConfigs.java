@@ -40,6 +40,7 @@ import com.tencent.mtt.hippy.adapter.soloader.HippySoLoaderAdapter;
 import com.tencent.mtt.hippy.adapter.storage.DefaultStorageAdapter;
 import com.tencent.mtt.hippy.adapter.storage.HippyStorageAdapter;
 import com.tencent.mtt.hippy.utils.LogUtils;
+import com.tencent.mtt.hippy.views.wormhole.event.HippyEventObserverAdapter;
 
 @SuppressWarnings({"deprecation", "unused"})
 public class HippyGlobalConfigs {
@@ -98,6 +99,7 @@ public class HippyGlobalConfigs {
 
   private final HippyLogAdapter mLogAdapter;
   private HippyDtAdapter mDtAdapter;
+  private HippyEventObserverAdapter mEventObserverAdapter;
 
   private boolean mEnableTurbo;
 
@@ -116,6 +118,7 @@ public class HippyGlobalConfigs {
     this.mLogAdapter = params.logAdapter;
     this.mDtAdapter = params.dtAdapter;
     this.mEnableTurbo = params.enableTurbo;
+    this.mEventObserverAdapter = params.eventObserverAdapter;
   }
 
   private HippyGlobalConfigs(Context context,
@@ -126,7 +129,7 @@ public class HippyGlobalConfigs {
       HippyEngineMonitorAdapter engineMonitorAdapter,
       HippyFontScaleAdapter hippyFontScaleAdapter, HippySoLoaderAdapter hippySoLoaderAdapter,
       HippyDeviceAdapter hippyDeviceAdapter,
-      HippyLogAdapter hippyLogAdapter) {
+      HippyLogAdapter hippyLogAdapter, HippyEventObserverAdapter hippyEventObserverAdapter) {
     this.mContext = context;
     this.mSharedPreferencesAdapter = sharedPreferencesAdapter;
     this.mExceptionHandler = exceptionHandler;
@@ -139,6 +142,7 @@ public class HippyGlobalConfigs {
     this.mSoLoaderAdapter = hippySoLoaderAdapter;
     this.mDeviceAdapter = hippyDeviceAdapter;
     this.mLogAdapter = hippyLogAdapter;
+    this.mEventObserverAdapter = hippyEventObserverAdapter;
   }
 
   public void destroyIfNeed() {
@@ -213,6 +217,10 @@ public class HippyGlobalConfigs {
     return mEngineMonitorAdapter;
   }
 
+  public HippyEventObserverAdapter getEventObserverAdapter() {
+    return mEventObserverAdapter;
+  }
+
   @Deprecated
   public void toDebug(HippyEngine.EngineInitParams params) {
     params.context = mContext;
@@ -259,6 +267,7 @@ public class HippyGlobalConfigs {
 
     private HippyLogAdapter mLogAdapter;
 
+    private HippyEventObserverAdapter mEventObserverAdapter;
 
     public HippyLogAdapter getLogAdapter() {
       return mLogAdapter;
@@ -325,6 +334,11 @@ public class HippyGlobalConfigs {
       return this;
     }
 
+    public Builder setEventObserverAdapter(HippyEventObserverAdapter eventObserverAdapter) {
+      this.mEventObserverAdapter = eventObserverAdapter;
+      return this;
+    }
+
     @Deprecated
     public HippyGlobalConfigs build() {
       if (mContext == null) {
@@ -371,7 +385,7 @@ public class HippyGlobalConfigs {
           mContext, mSharedPreferencesAdapter, mExceptionHandler,
           mHttpAdapter, mImageLoaderAdapter, mExecutorSupplierAdapter, mStorageAdapter,
           mEngineMonitorAdapter, mFontScaleAdapter,
-          mSoLoaderAdapter, mDeviceAdapter, mLogAdapter);
+          mSoLoaderAdapter, mDeviceAdapter, mLogAdapter, mEventObserverAdapter);
       return configs;
     }
   }

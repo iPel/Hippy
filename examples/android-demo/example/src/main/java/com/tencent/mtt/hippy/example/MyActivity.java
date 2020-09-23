@@ -5,16 +5,20 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.tencent.mtt.hippy.HippyEngine;
 import com.tencent.mtt.hippy.HippyAPIProvider;
 import com.tencent.mtt.hippy.HippyEngine.EngineInitStatus;
 import com.tencent.mtt.hippy.HippyEngine.ModuleLoadStatus;
 import com.tencent.mtt.hippy.HippyRootView;
-import com.tencent.mtt.hippy.IHippyNativeLogHandler;
 import com.tencent.mtt.hippy.adapter.exception.HippyExceptionHandlerAdapter;
 import com.tencent.mtt.hippy.common.HippyJsException;
 import com.tencent.mtt.hippy.common.HippyMap;
 import com.tencent.mtt.hippy.example.adapter.MyImageLoader;
+import com.tencent.mtt.hippy.example.wormhole.HippyWormholeEngine;
+import com.tencent.mtt.hippy.example.wormhole.MyAdapter;
 import com.tencent.mtt.hippy.utils.LogUtils;
 
 import java.util.ArrayList;
@@ -25,8 +29,9 @@ public class MyActivity extends Activity
 {
 	private HippyEngine mHippyEngine;
 	private HippyRootView mHippyView;
+  private HippyWormholeEngine mHippyWormholeEngine;
 
-	@Override
+  @Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
@@ -35,6 +40,22 @@ public class MyActivity extends Activity
 		HippyEngine.setNativeLogHandler(
 				msg -> Log.e("HippyCore", "onReceiveNativeLogMessage: " + msg));
 
+    boolean debugWormhole = false;
+    if(debugWormhole) {
+      mHippyWormholeEngine = new HippyWormholeEngine();
+      mHippyWormholeEngine.init(this, new Runnable() {
+        @Override
+        public void run() {
+          RecyclerView recyclerView = findViewById(R.id.recyclerview);
+          MyAdapter adapter = new MyAdapter(mHippyWormholeEngine);
+          LinearLayoutManager layoutManager = new LinearLayoutManager(MyActivity.this);
+          layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+          recyclerView.setLayoutManager(layoutManager);
+          recyclerView.setAdapter(adapter);
+        }
+      });
+      setContentView(R.layout.list);
+    } else
 		// 1/3. 初始化hippy引擎
 		{
 			HippyEngine.EngineInitParams initParams = new HippyEngine.EngineInitParams();
@@ -151,17 +172,26 @@ public class MyActivity extends Activity
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mHippyEngine.onEngineResume();
+    if (mHippyEngine != null) {
+      mHippyEngine.onEngineResume();
+    }
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		mHippyEngine.onEnginePause();
+    if (mHippyEngine != null) {
+      mHippyEngine.onEnginePause();
+    }
 	}
 
 	@Override
 	protected void onDestroy() {
+    if (mHippyEngine == null) {
+      super.onDestroy();
+      return;
+    }
+
 		// 3/3. 摧毁hippy前端模块，摧毁hippy引擎
 		mHippyEngine.destroyModule(mHippyView);
 		mHippyEngine.destroyEngine();
@@ -170,6 +200,11 @@ public class MyActivity extends Activity
 
 	@Override
 	public void onBackPressed() {
+    if (mHippyEngine == null) {
+      super.onBackPressed();
+      return;
+    }
+
 		// 可选：让hippy前端能够监听并拦截back事件
 		boolean handled = mHippyEngine.onBackPressed(new HippyEngine.BackPressHandler() {
 			@Override

@@ -51,6 +51,8 @@ import com.tencent.mtt.hippy.utils.ContextHolder;
 import com.tencent.mtt.hippy.utils.LogUtils;
 import com.tencent.mtt.hippy.utils.UIThreadUtils;
 import com.tencent.mtt.hippy.adapter.thirdparty.HippyThirdPartyAdapter;
+import com.tencent.mtt.hippy.views.wormhole.event.DefaultEventObserverAdapter;
+import com.tencent.mtt.hippy.views.wormhole.event.HippyEventObserverAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -291,6 +293,9 @@ public abstract class HippyEngine {
     @Deprecated
     public HippyLogAdapter logAdapter;
     public HippyDtAdapter dtAdapter;
+    // 可选参数 event adapter,目前虫洞用
+    public HippyEventObserverAdapter eventObserverAdapter;
+
     public V8InitParams v8InitParams;
     public boolean enableTurbo;
 
@@ -333,6 +338,11 @@ public abstract class HippyEngine {
       if (logAdapter == null) {
         logAdapter = new DefaultLogAdapter();
       }
+
+      if (eventObserverAdapter == null) {
+        eventObserverAdapter = new DefaultEventObserverAdapter();
+      }
+
       if (providers == null) {
         providers = new ArrayList<>();
       }
