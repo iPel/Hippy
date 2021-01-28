@@ -22,13 +22,16 @@ import com.tencent.mtt.hippy.views.image.HippyImageView;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Outline;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
 import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewOutlineProvider;
 
 @SuppressWarnings({"unused"})
 public class HippyViewGroup extends HippyImageView implements IHippyZIndexViewGroup {
@@ -43,6 +46,7 @@ public class HippyViewGroup extends HippyImageView implements IHippyZIndexViewGr
   private String mOverflow;
   private Path mOverflowPath;
   private RectF mOverflowRect;
+  private Rect mOutlineRect;
   private int mOldLayerType;
   private ViewConfiguration mViewConfiguration;
 
@@ -112,7 +116,15 @@ public class HippyViewGroup extends HippyImageView implements IHippyZIndexViewGr
                 this.setLayerType(LAYER_TYPE_SOFTWARE, null);
               }
               try {
-                canvas.clipPath(mOverflowPath);
+                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                  if (mOutlineRect == null) {
+                    mOutlineRect = new Rect();
+                  }
+                  mOutlineRect.set((int) left, (int) top, (int) right, (int) bottom);
+                  setOutline(mOutlineRect, radius);
+                } else {
+                  canvas.clipPath(mOverflowPath);
+                }
               } catch (Throwable throwable) {
                 restoreLayerType();
               }
@@ -136,6 +148,27 @@ public class HippyViewGroup extends HippyImageView implements IHippyZIndexViewGr
     //        Paint.FontMetricsInt fontMetrics = mPaint.getFontMetricsInt();
     //        int baseline = (getMeasuredHeight() - fontMetrics.bottom + fontMetrics.top) / 2 - fontMetrics.top;
     //        canvas.drawText(testString, getMeasuredWidth() / 2 - bounds.width() / 2, baseline, mPaint);
+  }
+
+  private ViewOutlineProvider mViewOutlineProvider;
+
+  private void setOutline(final Rect rect, final float radius) {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+      if (!getClipToOutline()) {
+        setClipToOutline(true);
+      }
+      if (mViewOutlineProvider == null) {
+        mViewOutlineProvider = new ViewOutlineProvider() {
+          @Override
+          public void getOutline(View view, Outline outline) {
+            outline.setRoundRect(rect, radius);
+          }
+        };
+      }
+      if (getOutlineProvider() != mViewOutlineProvider) {
+        setOutlineProvider(mViewOutlineProvider);
+      }
+    }
   }
 
   private void restoreLayerType() {
