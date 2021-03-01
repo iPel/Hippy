@@ -275,6 +275,19 @@ public class HippyImageView extends AsyncImageView implements CommonBorder, Hipp
             setCustomBackgroundDrawable((CommonBackgroundDrawable) bgDrawable);
           }
         }
+
+        if (numberOfLayers > 1) {
+          Drawable layer1Drawable = ((LayerDrawable) oldBGDrawable).getDrawable(1);
+          if (layer1Drawable instanceof HippyContentDrawable) {
+            HippyContentDrawable layer1 = (HippyContentDrawable) layer1Drawable;
+            if (mBGDrawable != null) {
+              layer1.setBorder(mBGDrawable.getBorderRadiusArray(), mBGDrawable.getBorderWidthArray());
+              setBackgroundDrawable(new LayerDrawable(new Drawable[]{mBGDrawable, layer1}));
+            } else {
+              setBackgroundDrawable(layer1Drawable);
+            }
+          }
+        }
       }
       super.setBackgroundColor(defaultBackgroundColor);
       mHasSetTempBackgroundColor = true;
