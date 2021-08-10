@@ -353,15 +353,7 @@ public class HippyTextInput extends EditText implements HippyViewBase, CommonBor
   };
 
   public void showInputMethodManager() {
-
-    InputMethodManager imm = this.getInputMethodManager();
-
-    try {
-      imm.showSoftInput(this, 0, null);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
+    KeyboardUtil.showSoftInput(this);
   }
 
 
