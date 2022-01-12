@@ -1,0 +1,8 @@
+apply plugin: "tnMaven2"
+apply from: 'packAarSourceAndDoc.gradle'
+
+tnMaven {
+  group = "com.tencent.news"
+  artifact = "hippy"
+  version = "2.11.5.0-SNAPSHOT"
+}

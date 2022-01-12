@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
-apply from: './mavencentral.gradle'
+//apply from: './mavencentral.gradle'
+apply from: './maven_news.gradle'
 
 ext {
   CMAKE_PATH = "$projectDir.absolutePath/src/main/jni/CMakeLists.txt"
@@ -10,11 +11,20 @@ ext {
 
 buildscript {
   repositories {
+
+    maven {
+      url "${tencentPublicRepo}"
+    }
+    maven {
+      url "${tencentPublicRepoSnapshot}"
+    }
+
     google()
     mavenCentral()
   }
   dependencies {
     classpath 'com.android.tools.build:gradle:4.2.2'
+    classpath "com.tencent.news:tnMaven2:1.0.2"
     // NOTE: Do not place your application dependencies here; they belong
     // in the individual module build.gradle files
   }
