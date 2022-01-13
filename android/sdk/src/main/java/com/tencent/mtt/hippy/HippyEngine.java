@@ -253,7 +253,7 @@ public abstract class HippyEngine {
     public boolean debugMode = false;
     // 可选参数 是否开启调试模式，默认为false，不开启
     // 可选参数 Hippy Server的jsbundle名字，默认为"index.bundle"。debugMode = true时有效
-    public final String debugBundleName = "index.bundle";
+    public String debugBundleName = "index.bundle";
     // 可选参数 Hippy Server的Host。默认为"localhost:38989"。debugMode = true时有效
     public String debugServerHost = "localhost:38989";
     // 可选参数 自定义的，用来提供Native modules、JavaScript modules、View controllers的管理器。1个或多个
