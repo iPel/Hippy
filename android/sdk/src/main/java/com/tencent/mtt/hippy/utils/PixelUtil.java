@@ -50,11 +50,16 @@ public class PixelUtil {
   }
 
   /** Convert from dp to px impl */
+  /**
+   * 这里强转int是因为：
+   * 瀑布流的时候这里总是返回小数，导致取整的时候出现+1-1的情况，导致瀑布流显示有问题
+   * hengyangji
+   */
   public static float dp2px(float value) {
     if (sDisplayMetrics == null) {
-      return value;
+      return (int) value;
     }
-    return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, sDisplayMetrics);
+    return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, sDisplayMetrics);
   }
 
   /** Convert from dp to px */
