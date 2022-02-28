@@ -25,7 +25,7 @@
 #-renamesourcefileattribute SourceFile
 #-optimizationpasses 7
 #-optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
--dontoptimize
+#-dontoptimize
 -dontusemixedcaseclassnames
 -verbose
 -dontskipnonpubliclibraryclasses
