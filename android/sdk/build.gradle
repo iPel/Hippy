@@ -21,7 +21,8 @@
  */
 
 apply plugin: 'com.android.library'
-apply from: './mavencentral.gradle'
+//apply from: './mavencentral.gradle'
+apply from: './tencent_video_bintray_publish.gradle'
 
 ext {
   CMAKE_PATH = "$projectDir.absolutePath/src/main/jni/CMakeLists.txt"
