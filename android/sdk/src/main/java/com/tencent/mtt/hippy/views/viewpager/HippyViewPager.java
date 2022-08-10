@@ -51,12 +51,21 @@ public class HippyViewPager extends ViewPager implements HippyViewBase {
   private ViewPagerPageChangeListener mPageListener;
   private final Handler mHandler = new Handler(Looper.getMainLooper());
   private Promise mCallBackPromise;
+  private OnScrollStateChangeListener mScrollStateChangListener;
 
   private void init(Context context) {
     setCallPageChangedOnFirstLayout(true);
     setEnableReLayoutOnAttachToWindow(false);
 
-    mPageListener = new ViewPagerPageChangeListener(this);
+    mPageListener = new ViewPagerPageChangeListener(this) {
+      @Override
+      public void onPageScrollStateChanged(int oldState, int newState) {
+        super.onPageScrollStateChanged(oldState, newState);
+        if (mScrollStateChangListener != null) {
+          mScrollStateChangListener.onScrollStateChanged(oldState, newState);
+        }
+      }
+    };
     setOnPageChangeListener(mPageListener);
     setAdapter(createAdapter(context));
     setLeftDragOutSizeEnabled(false);
@@ -257,5 +266,13 @@ public class HippyViewPager extends ViewPager implements HippyViewBase {
       }
     }
     invalidate();
+  }
+
+  public void setOnScrollStateChangeListener(OnScrollStateChangeListener scrollStateChangListener) {
+    mScrollStateChangListener = scrollStateChangListener;
+  }
+
+  public interface OnScrollStateChangeListener {
+    void onScrollStateChanged(int oldState, int newState);
   }
 }

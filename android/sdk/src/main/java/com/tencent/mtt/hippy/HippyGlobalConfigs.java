@@ -21,6 +21,7 @@ import com.tencent.mtt.hippy.adapter.DefaultLogAdapter;
 import com.tencent.mtt.hippy.adapter.HippyLogAdapter;
 import com.tencent.mtt.hippy.adapter.device.DefaultDeviceAdapter;
 import com.tencent.mtt.hippy.adapter.device.HippyDeviceAdapter;
+import com.tencent.mtt.hippy.adapter.dt.HippyDtAdapter;
 import com.tencent.mtt.hippy.adapter.exception.DefaultExceptionHandler;
 import com.tencent.mtt.hippy.adapter.exception.HippyExceptionHandlerAdapter;
 import com.tencent.mtt.hippy.adapter.executor.DefaultExecutorSupplierAdapter;
@@ -97,6 +98,10 @@ public class HippyGlobalConfigs {
 
   private final HippyLogAdapter mLogAdapter;
 
+  private HippyDtAdapter mDtAdapter;
+
+  private boolean nightMode;
+
   private boolean mEnableTurbo;
 
   public HippyGlobalConfigs(HippyEngine.EngineInitParams params) {
@@ -112,6 +117,8 @@ public class HippyGlobalConfigs {
     this.mSoLoaderAdapter = params.soLoader;
     this.mDeviceAdapter = params.deviceAdapter;
     this.mLogAdapter = params.logAdapter;
+    this.mDtAdapter = params.dtAdapter;
+    this.nightMode = params.nightMode;
     this.mEnableTurbo = params.enableTurbo;
   }
 
@@ -123,7 +130,7 @@ public class HippyGlobalConfigs {
       HippyEngineMonitorAdapter engineMonitorAdapter,
       HippyFontScaleAdapter hippyFontScaleAdapter, HippySoLoaderAdapter hippySoLoaderAdapter,
       HippyDeviceAdapter hippyDeviceAdapter,
-      HippyLogAdapter hippyLogAdapter) {
+      HippyLogAdapter hippyLogAdapter, HippyDtAdapter hippyDtAdapter) {
     this.mContext = context;
     this.mSharedPreferencesAdapter = sharedPreferencesAdapter;
     this.mExceptionHandler = exceptionHandler;
@@ -136,6 +143,7 @@ public class HippyGlobalConfigs {
     this.mSoLoaderAdapter = hippySoLoaderAdapter;
     this.mDeviceAdapter = hippyDeviceAdapter;
     this.mLogAdapter = hippyLogAdapter;
+    this.mDtAdapter = hippyDtAdapter;
   }
 
   public void destroyIfNeed() {
@@ -156,6 +164,14 @@ public class HippyGlobalConfigs {
     } catch (Throwable e) {
       LogUtils.d("HippyGlobalConfigs", "destroyIfNeed: " + e.getMessage());
     }
+  }
+
+  public boolean getNightMode() {
+    return nightMode;
+  }
+
+  public HippyDtAdapter getDtAdapter() {
+    return mDtAdapter;
   }
 
   public HippyLogAdapter getLogAdapter() {
@@ -220,6 +236,7 @@ public class HippyGlobalConfigs {
     params.soLoader = mSoLoaderAdapter;
     params.deviceAdapter = mDeviceAdapter;
     params.logAdapter = mLogAdapter;
+    params.dtAdapter = mDtAdapter;
     params.enableTurbo = true;
   }
 
@@ -364,7 +381,7 @@ public class HippyGlobalConfigs {
           mContext, mSharedPreferencesAdapter, mExceptionHandler,
           mHttpAdapter, mImageLoaderAdapter, mExecutorSupplierAdapter, mStorageAdapter,
           mEngineMonitorAdapter, mFontScaleAdapter,
-          mSoLoaderAdapter, mDeviceAdapter, mLogAdapter);
+          mSoLoaderAdapter, mDeviceAdapter, mLogAdapter, null);
       return configs;
     }
   }

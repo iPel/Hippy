@@ -631,7 +631,7 @@ public class HippyBridgeManagerImpl implements HippyBridgeManager, HippyBridge.B
         platformParams.pushString("PackageName", (packageName == null) ? "" : packageName);
         platformParams.pushString("VersionName", (versionName == null) ? "" : versionName);
         platformParams.pushInt("APILevel", Build.VERSION.SDK_INT);
-        platformParams.pushBoolean("NightMode", getNightMode());
+        platformParams.pushBoolean("nightMode", mContext.getGlobalConfigs().getNightMode());
 
         HippyMap Localization = new HippyMap();
         Localization.pushString("language", I18nUtil.getLanguage());
@@ -655,25 +655,6 @@ public class HippyBridgeManagerImpl implements HippyBridgeManager, HippyBridge.B
         globalParams.pushMap("tkd", tkd);
 
         return ArgumentUtils.objectToJson(globalParams);
-    }
-
-    private boolean getNightMode() {
-        int currentNightMode =
-                mContext.getGlobalConfigs().getContext().getResources().getConfiguration().uiMode
-                        & Configuration.UI_MODE_NIGHT_MASK;
-        switch (currentNightMode) {
-            case Configuration.UI_MODE_NIGHT_UNDEFINED:
-                // We don't know what mode we're in, assume notnight
-                return false;
-            case Configuration.UI_MODE_NIGHT_NO:
-                // Night mode is not active, we're in day time
-                return false;
-            case Configuration.UI_MODE_NIGHT_YES:
-                // Night mode is active, we're at night!
-                return true;
-            default:
-                return false;
-        }
     }
 
     @Override

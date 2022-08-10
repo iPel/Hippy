@@ -1,8 +1,13 @@
 package com.tencent.mtt.hippy.views.scroll;
 
 import android.content.Context;
+import android.os.Build;
+import android.os.Build.VERSION_CODES;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.View.OnScrollChangeListener;
 import android.view.ViewGroup;
 import com.tencent.mtt.hippy.annotation.HippyController;
 import com.tencent.mtt.hippy.annotation.HippyControllerProps;
@@ -12,6 +17,7 @@ import com.tencent.mtt.hippy.uimanager.HippyGroupController;
 import com.tencent.mtt.hippy.utils.PixelUtil;
 import com.tencent.mtt.hippy.views.list.HippyListView;
 import com.tencent.mtt.supportui.views.recyclerview.BaseLayoutManager;
+import java.lang.ref.WeakReference;
 
 @SuppressWarnings({"deprecation", "unused", "rawtypes"})
 @HippyController(name = HippyScrollViewController.CLASS_NAME)
@@ -23,6 +29,8 @@ public class HippyScrollViewController<T extends ViewGroup & HippyScrollView> ex
 
   public static final String CLASS_NAME = "ScrollView";
 
+  private Handler mScrollHandler = new Handler(Looper.getMainLooper());
+  private ScrollObserveRunnable mScrollRunnable = new ScrollObserveRunnable();
 
   @Override
   protected View createViewImpl(Context context, HippyMap iniProps) {
@@ -40,12 +48,26 @@ public class HippyScrollViewController<T extends ViewGroup & HippyScrollView> ex
       scrollView = new HippyVerticalScrollView(context);
     }
     ((HippyScrollView)scrollView).setScrollEventEnable(enableScrollEvent);
+    initScrollListener(scrollView);
     return scrollView;
   }
 
   @Override
   protected View createViewImpl(Context context) {
     return null;
+  }
+
+  private void initScrollListener(View view) {
+    if (Build.VERSION.SDK_INT >= VERSION_CODES.M) {
+      view.setOnScrollChangeListener(new OnScrollChangeListener() {
+        @Override
+        public void onScrollChange(View view, int i, int i1, int i2, int i3) {
+          mScrollRunnable.setTargetView(view);
+          mScrollHandler.removeCallbacks(mScrollRunnable);
+          mScrollHandler.postDelayed(mScrollRunnable, 200);
+        }
+      });
+    }
   }
 
   @HippyControllerProps(name = "scrollEnabled", defaultType = HippyControllerProps.BOOLEAN, defaultBoolean = true)
@@ -149,5 +171,21 @@ public class HippyScrollViewController<T extends ViewGroup & HippyScrollView> ex
     }
   }
 
+  private class ScrollObserveRunnable implements Runnable {
+
+    private WeakReference<View> viewRef;
+
+    public void setTargetView(View view) {
+      viewRef = new WeakReference<>(view);
+    }
+
+    @Override
+    public void run() {
+      View view = viewRef != null ? viewRef.get() : null;
+      if (view != null) {
+        traverseExposure(view);
+      }
+    }
+  }
 
 }

@@ -61,6 +61,10 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
   private int initialContentOffset = 0;
   private boolean hasCompleteFirstBatch = false;
 
+  /* 记录点击时的位置，用以解决ViewPager嵌套滑动冲突问题 */
+  private float mLastTouchDownX;
+  private float mLastTouchDownY;
+
   public HippyVerticalScrollView(Context context) {
     super(context);
     mHippyOnScrollHelper = new HippyOnScrollHelper();
@@ -117,11 +121,18 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
     int action = event.getAction() & MotionEvent.ACTION_MASK;
     if (action == MotionEvent.ACTION_DOWN && !mDragging) {
       mDragging = true;
+      mLastTouchDownX = event.getRawX();
+      mLastTouchDownY = event.getRawY();
       if (mScrollBeginDragEventEnable) {
         HippyScrollViewEventHelper.emitScrollBeginDragEvent(this);
       }
       // 当手指触摸listview时，让父控件交出ontouch权限,不能滚动
       setParentScrollableIfNeed(false);
+    } else if (action == MotionEvent.ACTION_MOVE && mDragging) {
+      float distanceX = Math.abs(event.getRawX() - mLastTouchDownX);
+      float distanceY = Math.abs(event.getRawY() - mLastTouchDownY);
+      // 当横向滑动时，让父控件接收onTouch事件，可滚动
+      setParentScrollableIfNeed(distanceX > distanceY);
     } else if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) && mDragging) {
       if (mScrollEndDragEventEnable) {
         HippyScrollViewEventHelper.emitScrollEndDragEvent(this);

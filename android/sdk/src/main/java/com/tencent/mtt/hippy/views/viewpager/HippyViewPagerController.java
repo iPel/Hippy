@@ -30,6 +30,8 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.tencent.mtt.hippy.views.viewpager.HippyViewPager.OnScrollStateChangeListener;
+import com.tencent.mtt.supportui.views.viewpager.ViewPager;
 
 @SuppressWarnings({"deprecation", "unused"})
 @HippyController(name = HippyViewPagerController.CLASS_NAME)
@@ -48,7 +50,9 @@ public class HippyViewPagerController extends HippyViewController<HippyViewPager
 
   @Override
   protected View createViewImpl(Context context) {
-    return new HippyViewPager(context);
+    HippyViewPager view = new HippyViewPager(context);
+    initScrollListener(view);
+    return view;
   }
 
   @Override
@@ -62,7 +66,20 @@ public class HippyViewPagerController extends HippyViewController<HippyViewPager
       }
     }
 
-    return new HippyViewPager(context, isVertical);
+    HippyViewPager view = new HippyViewPager(context, isVertical);
+    initScrollListener(view);
+    return view;
+  }
+
+  private void initScrollListener(HippyViewPager viewPager) {
+    viewPager.setOnScrollStateChangeListener(new OnScrollStateChangeListener() {
+      @Override
+      public void onScrollStateChanged(int oldState, int newState) {
+        if (newState == ViewPager.SCROLL_STATE_IDLE) {
+          traversePage(viewPager);
+        }
+      }
+    });
   }
 
   @Override

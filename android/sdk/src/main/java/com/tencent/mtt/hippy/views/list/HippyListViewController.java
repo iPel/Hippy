@@ -26,6 +26,7 @@ import com.tencent.mtt.hippy.uimanager.ListViewRenderNode;
 import com.tencent.mtt.hippy.uimanager.RenderNode;
 import com.tencent.mtt.hippy.utils.PixelUtil;
 import com.tencent.mtt.supportui.views.recyclerview.BaseLayoutManager;
+import com.tencent.mtt.supportui.views.recyclerview.RecyclerView;
 import com.tencent.mtt.supportui.views.recyclerview.RecyclerViewBase;
 import com.tencent.mtt.supportui.views.recyclerview.RecyclerViewItem;
 
@@ -83,7 +84,9 @@ public class HippyListViewController extends HippyViewController<HippyListView> 
 
   @Override
   protected View createViewImpl(Context context) {
-    return new HippyListView(context, BaseLayoutManager.VERTICAL);
+    HippyListView listView = new HippyListView(context, BaseLayoutManager.VERTICAL);
+    initListView(listView);
+    return listView;
   }
 
   @Override
@@ -98,7 +101,38 @@ public class HippyListViewController extends HippyViewController<HippyListView> 
     }
     HippyListView listView = new HippyListView(context, orientation);
     listView.setOnScrollEventEnable(enableScrollEvent);
+    initListView(listView);
     return listView;
+  }
+
+  private void initListView(HippyListView listView) {
+    listView.addOnListScrollListener(new RecyclerView.OnListScrollListener() {
+
+      @Override
+      public void onStartDrag() {
+
+      }
+
+      @Override
+      public void onScroll(int dx, int dy) {
+
+      }
+
+      @Override
+      public void onScrollEnd() {
+        traverseExposure(listView);
+      }
+
+      @Override
+      public void onDragEnd() {
+
+      }
+
+      @Override
+      public void onStartFling() {
+
+      }
+    });
   }
 
   @Override

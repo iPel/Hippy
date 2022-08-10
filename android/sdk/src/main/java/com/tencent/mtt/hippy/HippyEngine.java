@@ -22,6 +22,7 @@ import com.tencent.mtt.hippy.adapter.DefaultLogAdapter;
 import com.tencent.mtt.hippy.adapter.HippyLogAdapter;
 import com.tencent.mtt.hippy.adapter.device.DefaultDeviceAdapter;
 import com.tencent.mtt.hippy.adapter.device.HippyDeviceAdapter;
+import com.tencent.mtt.hippy.adapter.dt.HippyDtAdapter;
 import com.tencent.mtt.hippy.adapter.exception.DefaultExceptionHandler;
 import com.tencent.mtt.hippy.adapter.exception.HippyExceptionHandlerAdapter;
 import com.tencent.mtt.hippy.adapter.executor.DefaultExecutorSupplierAdapter;
@@ -286,6 +287,8 @@ public abstract class HippyEngine {
     public int groupId = -1;
     // 可选参数 日志输出
     public HippyLogAdapter logAdapter;
+    public HippyDtAdapter dtAdapter;
+    public boolean nightMode;
     public V8InitParams v8InitParams;
     public boolean enableTurbo;
 
