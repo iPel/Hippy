@@ -86,7 +86,7 @@ public class HippyRecyclerViewBase extends RecyclerViewBase {
     }
 
     @Override
-    String exceptionLabel() {
+    protected String exceptionLabel() {
         return super.exceptionLabel() + ",state:" + getStateInfo();
     }
 

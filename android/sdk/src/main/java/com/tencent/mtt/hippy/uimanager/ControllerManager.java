@@ -42,6 +42,8 @@ import com.tencent.mtt.hippy.utils.LogUtils;
 import com.tencent.mtt.hippy.utils.PixelUtil;
 import com.tencent.mtt.hippy.utils.UIThreadUtils;
 import com.tencent.mtt.hippy.views.custom.HippyCustomPropsController;
+import com.tencent.mtt.hippy.views.hippylist.HippyRecyclerView;
+import com.tencent.mtt.hippy.views.hippylist.HippyRecyclerViewController;
 import com.tencent.mtt.hippy.views.list.HippyRecycler;
 import com.tencent.mtt.hippy.views.scroll.HippyHorizontalScrollView;
 import com.tencent.mtt.hippy.views.view.HippyViewGroupController;
@@ -297,6 +299,8 @@ public class ControllerManager implements HippyInstanceLifecycleEventListener {
     View view = mControllerRegistry.getView(id);
     if (view != null) {
       hippyViewController.onBatchComplete(view);
+    } else if (HippyRecyclerViewController.CLASS_NAME.equals(className)) {
+        HippyRecyclerView.setGlobalNotNotifyReason(new Throwable("no view id=" + id));
     }
   }
 	public void onBatchStart(String className, int id) {

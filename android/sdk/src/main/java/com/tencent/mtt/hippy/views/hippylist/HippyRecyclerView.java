@@ -18,8 +18,10 @@ package com.tencent.mtt.hippy.views.hippylist;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.KeyEvent;
 
+import android.view.ViewParent;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.HippyRecyclerViewBase;
@@ -32,6 +34,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.tencent.mtt.hippy.HippyEngineContext;
+import com.tencent.mtt.hippy.uimanager.RenderNode;
 import com.tencent.mtt.hippy.utils.LogUtils;
 import com.tencent.mtt.hippy.utils.PixelUtil;
 import com.tencent.mtt.hippy.views.hippylist.recyclerview.helper.skikcy.IHeaderAttachListener;
@@ -59,6 +62,9 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
     private int mInitialContentOffset;
     private boolean isTvPlatform = false;
     private HippyRecycleViewFocusHelper mFocusHelper = null;
+    private Throwable mModifyStackTrace;
+    private Throwable mNotNotifyReason;
+    private static Throwable sGlobalNotNotifyReason;
 
     public HippyRecyclerView(Context context) {
         super(context);
@@ -172,6 +178,8 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
     public void setListData() {
         LogUtils.d("HippyRecyclerView", "itemCount =" + listAdapter.getItemCount());
         listAdapter.notifyDataSetChanged();
+        mNotNotifyReason = null;
+        mModifyStackTrace = null;
 
         if (isTvPlatform) {
             mFocusHelper.setListData();
@@ -521,4 +529,62 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
                 + getStateInfo()
                 + "}";
     }
+
+    @Override
+    protected String exceptionLabel() {
+        String label = " node:" + getNodeInfo() + " mod:" + getStackTrace(mModifyStackTrace, 1, 5)
+            + " reason:" + (mNotNotifyReason != null ? getStackTrace(mNotNotifyReason, 1, 3) : getStackTrace(sGlobalNotNotifyReason, 0, 3))
+            + super.exceptionLabel() + ",state:" + getStateInfo();
+        Log.e("hippy.list", label);
+        return label;
+    }
+
+    public String getNodeInfo() {
+        ViewParent parent = getParent();
+        int id = parent instanceof ViewGroup ? ((ViewGroup) parent).getId() : View.NO_ID;
+        RenderNode node = null;
+        if (hippyEngineContext != null && id != NO_ID) {
+            node = hippyEngineContext.getRenderManager().getRenderNode(id);
+        }
+        StringBuilder sb = new StringBuilder("id=").append(id);
+        sb.append(node == null ? 'n' : node.isDelete() ? 'd' : '-');
+        int itemCount = node == null ? 0 : node.getChildCount();
+        sb.append(",c=").append(itemCount).append(",nc=").append(renderNodeCount);
+        /* if (itemCount > 0) {
+            sb.append(",cid=[");
+            for (int i = 0; i < node.getChildCount(); ++i) {
+                if (i != 0) {
+                    sb.append(',');
+                }
+                sb.append(node.getChildAt(i).getId());
+            }
+            sb.append(']');
+        } */
+        return sb.toString();
+    }
+
+    private static String getStackTrace(Throwable t, int from, int to) {
+        if (t == null) {
+            return "null";
+        }
+        StringBuilder sb = new StringBuilder().append(t.getMessage()).append(' ');
+        StackTraceElement[] stack = t.getStackTrace();
+        for (int i = from; i < to && i < stack.length; ++i) {
+            sb.append("at ").append(stack[i]);
+        }
+        return sb.toString();
+    }
+
+    public void setModifyStackTrace(Throwable t) {
+        mModifyStackTrace = t;
+    }
+
+    public void setNotNotifyReason(Throwable t) {
+        mNotNotifyReason = t;
+    }
+
+    public static void setGlobalNotNotifyReason(Throwable t) {
+        sGlobalNotNotifyReason = t;
+    }
+
 }

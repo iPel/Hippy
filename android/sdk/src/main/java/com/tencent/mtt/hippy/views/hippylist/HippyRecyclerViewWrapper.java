@@ -144,4 +144,12 @@ public class HippyRecyclerViewWrapper<HRCV extends HippyRecyclerView> extends Fr
     public void onBatchComplete() {
         recyclerView.onBatchComplete();
     }
+
+    public void setModifyStackTrace(Throwable t) {
+        recyclerView.setModifyStackTrace(t);
+    }
+
+    public void setNotNotifyReason(Throwable t) {
+        recyclerView.setNotNotifyReason(t);
+    }
 }

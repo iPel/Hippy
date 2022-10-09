@@ -28,6 +28,7 @@ import com.tencent.mtt.hippy.dom.node.NodeProps;
 import com.tencent.mtt.hippy.modules.Promise;
 import com.tencent.mtt.hippy.utils.LogUtils;
 
+import com.tencent.mtt.hippy.views.hippylist.HippyRecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,6 +153,8 @@ public class RenderManager {
       addUpdateNodeIfNeeded(uiNode.mParent);
     } else if (TextUtils.equals(NodeProps.ROOT_NODE, uiNode.getClassName())) {
       addUpdateNodeIfNeeded(uiNode);
+    } else if (uiNode instanceof ListItemRenderNode) {
+        HippyRecyclerView.setGlobalNotNotifyReason(new Throwable("no node"));
     }
     deleteSelfFromParent(uiNode);
 
@@ -223,6 +226,9 @@ public class RenderManager {
     }
     LogUtils.d("RenderManager", "delete RenderNode " + uiNode.mId + " class " + uiNode.mClassName);
     int childCount = uiNode.getChildCount();
+    if (childCount > 0 && uiNode instanceof ListViewRenderNode) {
+        ((ListViewRenderNode) uiNode).generateNotifyInfo("recursive delete");
+    }
     for (int i = 0; i < childCount; i++) {
       deleteSelfFromParent(uiNode.getChildAt(0));
     }

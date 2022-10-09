@@ -15,8 +15,11 @@
  */
 package com.tencent.mtt.hippy.uimanager;
 
+import android.view.View;
 import com.tencent.mtt.hippy.HippyRootView;
 import com.tencent.mtt.hippy.common.HippyMap;
+import com.tencent.mtt.hippy.views.hippylist.HippyRecyclerView;
+import com.tencent.mtt.hippy.views.hippylist.HippyRecyclerViewWrapper;
 
 @SuppressWarnings({"deprecation", "unused"})
 public class ListViewRenderNode extends RenderNode {
@@ -39,6 +42,46 @@ public class ListViewRenderNode extends RenderNode {
       ListItemRenderNode listItemRenderNode = (ListItemRenderNode) uiNode;
       listItemRenderNode.setRecycleItemTypeChangeListener(null);
     }
+    generateModifyInfo(uiNode, -1);
     return super.removeChild(uiNode);
   }
+
+    @Override
+    void addChild(RenderNode uiNode, int index) {
+        generateModifyInfo(uiNode, index);
+        super.addChild(uiNode, index);
+    }
+
+    @Override
+    public void remove(int index) {
+        generateModifyInfo(null, index);
+        super.remove(index);
+    }
+
+    private void generateModifyInfo(RenderNode child, int index) {
+        View view = mComponentManager.findView(mId);
+        String msg = "c:" + child + "i:" + index;
+        if (view instanceof HippyRecyclerViewWrapper) {
+            ((HippyRecyclerViewWrapper<?>) view).setModifyStackTrace(new Throwable(msg));
+        }
+    }
+
+    public void generateNotifyInfo(String reason) {
+        View view = mComponentManager.findView(mId);
+        if (view instanceof HippyRecyclerViewWrapper) {
+            ((HippyRecyclerViewWrapper<?>) view).setNotNotifyReason(new Throwable(reason));
+        } else {
+            HippyRecyclerView.setGlobalNotNotifyReason(new Throwable(reason + " id=" + mId));
+        }
+    }
+
+    @Override
+    public void batchComplete() {
+        if (mIsLazyLoad) {
+            generateNotifyInfo("lazy");
+        } else if (mIsDelete) {
+            generateNotifyInfo("del");
+        }
+        super.batchComplete();
+    }
 }
