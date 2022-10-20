@@ -158,13 +158,7 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
       }
 
       if(mPagingEnabled) {
-        post(new Runnable() {
-               @Override
-               public void run() {
-                 doPageScroll();
-               }
-             }
-        );
+        post(mDoPageScrollRunnable);
       }
       // 当手指松开时，让父控件重新获取onTouch权限
 //      setParentScrollableIfNeed(true);
@@ -532,14 +526,14 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
   public void onStopNestedScroll(@NonNull View target, int type) {
     super.onStopNestedScroll(target, type);
     if (mPagingEnabled) {
-      post(new Runnable() {
-        @Override
-        public void run() {
-          doPageScroll();
-        }
-      });
+      post(mDoPageScrollRunnable);
     }
   }
+
+  private final Runnable mDoPageScrollRunnable = this::doPageScroll;
+
+  private final Runnable mComputeScrollRunnable = HippyVerticalScrollView.super::computeScroll;
+
 
   @Override
   public void computeScroll() {
@@ -548,14 +542,21 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
      * onNestedScroll等方法，导致RecyclerView在draw过程中removeView从而crash，因此需要post执行。
      */
     if (hasNestedScrollingParent(ViewCompat.TYPE_NON_TOUCH)) {
-      post(new Runnable() {
-        @Override
-        public void run() {
-          HippyVerticalScrollView.super.computeScroll();
-        }
-      });
+      post(mComputeScrollRunnable);
     } else {
       super.computeScroll();
     }
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    super.onDetachedFromWindow();
+    /*
+     * post的任务放在主线程，但是node的移除等在js线程中操作，可能导致view被移除后仍执行某些操作导致一些异常
+     * 比如recyclerView的不同步问题
+     */
+    removeCallbacks(mComputeScrollRunnable);
+    removeCallbacks(mDoPageScrollRunnable);
+
   }
 }
