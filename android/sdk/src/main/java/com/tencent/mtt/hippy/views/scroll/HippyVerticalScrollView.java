@@ -78,6 +78,10 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
   private final boolean isTvPlatform;
   private final Priority[] mNestedScrollPriority = { Priority.SELF, Priority.NOT_SET, Priority.NOT_SET, Priority.NOT_SET, Priority.NOT_SET };
 
+  private final Runnable mDoPageScrollRunnable = this::doPageScroll;
+
+  private final Runnable mComputeScrollRunnable = HippyVerticalScrollView.super::computeScroll;
+
   public HippyVerticalScrollView(Context context) {
     super(context);
     mHippyOnScrollHelper = new HippyOnScrollHelper();
@@ -530,9 +534,7 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
     }
   }
 
-  private final Runnable mDoPageScrollRunnable = this::doPageScroll;
 
-  private final Runnable mComputeScrollRunnable = HippyVerticalScrollView.super::computeScroll;
 
 
   @Override
@@ -552,8 +554,8 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
   protected void onDetachedFromWindow() {
     super.onDetachedFromWindow();
     /*
-     * post的任务放在主线程，但是node的移除等在js线程中操作，可能导致view被移除后仍执行某些操作导致一些异常
-     * 比如recyclerView的不同步问题
+     * post task is main thread,but node handle(add or remove) is in js thread，
+     * it may lead to use after free bugs in some case,such as inconsistency in recyclerView
      */
     removeCallbacks(mComputeScrollRunnable);
     removeCallbacks(mDoPageScrollRunnable);
