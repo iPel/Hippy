@@ -75,9 +75,7 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
   private final boolean isTvPlatform;
   private final Priority[] mNestedScrollPriority = {Priority.SELF, Priority.NOT_SET,
       Priority.NOT_SET, Priority.NOT_SET, Priority.NOT_SET};
-
   private final Runnable mDoPageScrollRunnable = this::doPageScroll;
-
   private final Runnable mComputeScrollRunnable = HippyVerticalScrollView.super::computeScroll;
 
   public HippyVerticalScrollView(Context context) {
@@ -520,9 +518,6 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
     }
   }
 
-
-
-
   @Override
   public void computeScroll() {
     // computeScroll() is triggered by the draw method of the ViewParent. If the RecyclerView is in
@@ -544,6 +539,7 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
      */
     removeCallbacks(mComputeScrollRunnable);
     removeCallbacks(mDoPageScrollRunnable);
-
+    // a hacky way to abort animated scroll
+    smoothScrollBy(0, 0);
   }
 }
