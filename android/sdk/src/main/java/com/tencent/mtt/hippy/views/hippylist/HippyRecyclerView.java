@@ -20,7 +20,11 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.util.AttributeSet;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 
 import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
@@ -29,15 +33,11 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.HippyRecyclerViewBase;
 import androidx.recyclerview.widget.IHippyViewAboundListener;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-
 import com.tencent.mtt.hippy.HippyEngineContext;
 import com.tencent.mtt.hippy.utils.LogUtils;
 import com.tencent.mtt.hippy.utils.PixelUtil;
+import com.tencent.mtt.hippy.views.common.HippyNestedScrollComponent.HippyNestedScrollTarget2;
+import com.tencent.mtt.hippy.views.common.HippyNestedScrollHelper;
 import com.tencent.mtt.hippy.views.hippylist.recyclerview.helper.skikcy.IHeaderAttachListener;
 import com.tencent.mtt.hippy.views.hippylist.recyclerview.helper.skikcy.IHeaderHost;
 import com.tencent.mtt.hippy.views.hippylist.recyclerview.helper.skikcy.StickyHeaderHelper;
@@ -46,7 +46,7 @@ import com.tencent.mtt.hippy.views.hippylist.recyclerview.helper.skikcy.StickyHe
  * Created  on 2020/12/22. Description
  */
 public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends HippyRecyclerViewBase
-        implements IHeaderAttachListener, IHippyViewAboundListener {
+        implements IHeaderAttachListener, IHippyViewAboundListener, HippyNestedScrollTarget2 {
 
     private static int DEFAULT_ITEM_VIEW_CACHE_SIZE = 8;
     protected HippyEngineContext hippyEngineContext;
@@ -64,6 +64,10 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
     private boolean isTvPlatform = false;
     private HippyRecycleViewFocusHelper mFocusHelper = null;
     private final int[] mScrollConsumedPair = new int[2];
+    private final Priority[] mNestedScrollPriority = {Priority.SELF, Priority.NOT_SET,
+        Priority.NOT_SET, Priority.NOT_SET, Priority.NOT_SET};
+    private int mNestedScrollAxesTouch;
+    private int mNestedScrollAxesNonTouch;
 
     public HippyRecyclerView(Context context) {
         super(context);
@@ -75,6 +79,13 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
 
     public HippyRecyclerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        // enable nested scrolling
+        setNestedScrollingEnabled(true);
     }
 
     public void onDestroy() {
@@ -125,8 +136,14 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        boolean isIntercept = super.onInterceptTouchEvent(ev);
-        return isIntercept;
+        if (!isEnableScroll || mNestedScrollAxesTouch != SCROLL_AXIS_NONE) {
+            // We want to prevent the same direction intercepts only, so we can't use
+            // `requestDisallowInterceptTouchEvent` for this purpose.
+            // `mNestedScrollAxesTouch != SCROLL_AXIS_NONE` means has nested scroll child, no
+            // need to intercept
+            return false;
+        }
+        return super.onInterceptTouchEvent(ev);
     }
 
     @Override
@@ -134,11 +151,7 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
         if (!isEnableScroll) {
             return false;
         }
-      boolean handled = super.onTouchEvent(e);
-      if (handled && (e.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_DOWN) {
-        requestDisallowInterceptTouchEvent(true);
-      }
-      return handled;
+        return super.onTouchEvent(e);
     }
 
     public void setInitialContentOffset(int initialContentOffset) {
@@ -612,7 +625,8 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
     }
 
     protected boolean handlePullRefresh(int dx, int dy, int[] consumed) {
-        if (listAdapter.headerRefreshHelper == null && listAdapter.footerRefreshHelper == null) {
+        if (listAdapter == null ||
+            (listAdapter.headerRefreshHelper == null && listAdapter.footerRefreshHelper == null)) {
             return false;
         }
         boolean isHorizontal = HippyListUtils.isHorizontalLayout(this);
@@ -638,6 +652,9 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
     }
 
     protected void endPullRefresh() {
+        if (listAdapter == null) {
+            return;
+        }
         if (listAdapter.headerRefreshHelper != null) {
             listAdapter.headerRefreshHelper.endDrag();
         }
@@ -646,4 +663,177 @@ public class HippyRecyclerView<ADP extends HippyRecyclerListAdapter> extends Hip
         }
     }
 
+    @Override
+    public void setNestedScrollPriority(int direction, Priority priority) {
+        mNestedScrollPriority[direction] = priority;
+    }
+
+    @Override
+    public Priority getNestedScrollPriority(int direction) {
+        Priority result = mNestedScrollPriority[direction];
+        if (result == Priority.NOT_SET) {
+            result = mNestedScrollPriority[DIRECTION_ALL];
+        }
+        return result;
+    }
+
+    private int computeHorizontallyScrollDistance(int dx) {
+        if (dx < 0) {
+            return Math.max(dx, -computeHorizontalScrollOffset());
+        }
+        if (dx > 0) {
+            int avail = computeHorizontalScrollRange() - computeHorizontalScrollExtent()
+                - computeHorizontalScrollOffset() - 1;
+            return Math.min(dx, avail);
+        }
+        return 0;
+    }
+
+    private int computeVerticallyScrollDistance(int dy) {
+        if (dy < 0) {
+            return Math.max(dy, -computeVerticalScrollOffset());
+        }
+        if (dy > 0) {
+            int avail = computeVerticalScrollRange() - computeVerticalScrollExtent()
+                - computeVerticalScrollOffset() - 1;
+            return Math.min(dy, avail);
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int axes) {
+        return onStartNestedScroll(child, target, axes, ViewCompat.TYPE_TOUCH);
+    }
+
+    @Override
+    public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int axes,
+        int type) {
+        if (!isEnableScroll) {
+            return false;
+        }
+        // Determine whether to respond to the nested scrolling event of the child
+        LayoutManager manager = getLayoutManager();
+        if (manager == null) {
+            return false;
+        }
+        int myAxes = SCROLL_AXIS_NONE;
+        if (manager.canScrollVertically() && (axes & SCROLL_AXIS_VERTICAL) != 0) {
+            myAxes |= SCROLL_AXIS_VERTICAL;
+        }
+        if (manager.canScrollHorizontally() && (axes & SCROLL_AXIS_HORIZONTAL) != 0) {
+            myAxes |= SCROLL_AXIS_HORIZONTAL;
+        }
+        if (myAxes != SCROLL_AXIS_NONE) {
+            if (type == ViewCompat.TYPE_TOUCH) {
+                mNestedScrollAxesTouch = myAxes;
+            } else {
+                mNestedScrollAxesNonTouch = myAxes;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onNestedScrollAccepted(@NonNull View child, @NonNull View target, int axes) {
+        onNestedScrollAccepted(child, target, axes, ViewCompat.TYPE_TOUCH);
+    }
+
+    @Override
+    public void onNestedScrollAccepted(@NonNull View child, @NonNull View target, int axes,
+        int type) {
+        startNestedScroll(
+            type == ViewCompat.TYPE_TOUCH ? mNestedScrollAxesTouch : mNestedScrollAxesNonTouch,
+            type);
+    }
+
+    @Override
+    public void onStopNestedScroll(@NonNull View child) {
+        onStopNestedScroll(child, ViewCompat.TYPE_TOUCH);
+    }
+
+    @Override
+    public void onStopNestedScroll(@NonNull View target, int type) {
+        if (type == ViewCompat.TYPE_TOUCH) {
+            mNestedScrollAxesTouch = SCROLL_AXIS_NONE;
+        } else {
+            mNestedScrollAxesNonTouch = SCROLL_AXIS_NONE;
+        }
+        stopNestedScroll(type);
+    }
+
+    @Override
+    public void onNestedScroll(@NonNull View target, int dxConsumed, int dyConsumed,
+        int dxUnconsumed,
+        int dyUnconsumed) {
+        onNestedScroll(target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed,
+            ViewCompat.TYPE_TOUCH);
+    }
+
+    @Override
+    public void onNestedScroll(@NonNull View target, int dxConsumed, int dyConsumed,
+        int dxUnconsumed,
+        int dyUnconsumed, int type) {
+        // Process the current View first
+        int myDx = HippyNestedScrollHelper.priorityOfX(target, dxUnconsumed) == Priority.SELF
+            ? computeHorizontallyScrollDistance(dxUnconsumed) : 0;
+        int myDy = HippyNestedScrollHelper.priorityOfY(target, dyUnconsumed) == Priority.SELF
+            ? computeVerticallyScrollDistance(dyUnconsumed) : 0;
+        if (myDx != 0 || myDy != 0) {
+            scrollBy(myDx, myDy);
+            dxConsumed += myDx;
+            dyConsumed += myDy;
+            dxUnconsumed -= myDx;
+            dyUnconsumed -= myDy;
+        }
+        // Then dispatch to the parent for processing
+        int parentDx = HippyNestedScrollHelper.priorityOfX(this, dxUnconsumed) == Priority.NONE ? 0
+            : dxUnconsumed;
+        int parentDy = HippyNestedScrollHelper.priorityOfY(this, dyUnconsumed) == Priority.NONE ? 0
+            : dyUnconsumed;
+        if (parentDx != 0 || parentDy != 0) {
+            dispatchNestedScroll(dxConsumed, dyConsumed, parentDx, parentDy, null, type);
+        }
+    }
+
+    @Override
+    public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed) {
+        onNestedPreScroll(target, dx, dy, consumed, ViewCompat.TYPE_TOUCH);
+    }
+
+    @Override
+    public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed,
+        int type) {
+        // Dispatch to the parent for processing first
+        int parentDx = HippyNestedScrollHelper.priorityOfX(this, dx) == Priority.NONE ? 0 : dx;
+        int parentDy = HippyNestedScrollHelper.priorityOfY(this, dy) == Priority.NONE ? 0 : dy;
+        if (parentDx != 0 || parentDy != 0) {
+            // Temporarily store `consumed` to reuse the Array
+            int consumedX = consumed[0];
+            int consumedY = consumed[1];
+            consumed[0] = 0;
+            consumed[1] = 0;
+            dispatchNestedPreScroll(parentDx, parentDy, consumed, null, type);
+            dx -= consumed[0];
+            dy -= consumed[1];
+            consumed[0] += consumedX;
+            consumed[1] += consumedY;
+        }
+        // Then process the current View
+        int myDx = HippyNestedScrollHelper.priorityOfX(target, dx) == Priority.PARENT
+            ? computeHorizontallyScrollDistance(dx) : 0;
+        int myDy = HippyNestedScrollHelper.priorityOfY(target, dy) == Priority.PARENT
+            ? computeVerticallyScrollDistance(dy) : 0;
+        if (myDx != 0 || myDy != 0) {
+            consumed[0] += myDx;
+            consumed[1] += myDy;
+            scrollBy(myDx, myDy);
+        }
+    }
+
+    @Override
+    public int getNestedScrollAxes() {
+        return mNestedScrollAxesTouch | mNestedScrollAxesNonTouch;
+    }
 }
