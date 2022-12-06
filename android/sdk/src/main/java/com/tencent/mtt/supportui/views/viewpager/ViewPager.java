@@ -4729,15 +4729,15 @@ public class ViewPager extends ViewGroup implements ScrollChecker.IScrollCheck
 	@Override
 	public boolean verticalCanScroll(int dis)
 	{
-        if (!mCanScroll || !mIsVertical) {
-            return false;
-        }
-        if (dis < 0) {
-            return mCurItem > 0;
-        } else if (dis > 0) {
-            return mCurItem < getPageCount() - 1;
-        }
-		return false;
+    if (!mCanScroll || !mIsVertical) {
+      return false;
+    }
+    if (dis < 0) {
+      return mCurItem > 0;
+    } else if (dis > 0) {
+      return mCurItem < getPageCount() - 1;
+    }
+    return false;
 	}
 
 	@Override
