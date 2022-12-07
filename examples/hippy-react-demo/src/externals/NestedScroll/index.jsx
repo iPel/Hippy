@@ -101,7 +101,7 @@ export default class NestedScrollExample extends React.Component {
           initialPage={currentSlide}
           style={{ height: layoutHeight - 80 }}
           onPageSelected={e => this.setState({ currentSlide: e.position })}>
-          <ListView nestedScrollTopPriority={currentSlide === 0 ? 'parent' : 'self'} key={`slide${currentSlide}`}
+          <ListView nestedScrollTopPriority={'parent'} key={'slide1'}
             numberOfRows={30}
             getRowKey={i => `item${i}`}
             initialListSize={30}
@@ -109,6 +109,15 @@ export default class NestedScrollExample extends React.Component {
               <Text style={i % 2 ? styles.itemEvenText : styles.itemOddText}>Item {i}</Text>
             )}
             getRowStyle={i => (i % 2 ? styles.itemEven : styles.itemOdd)}
+          />
+          <ListView nestedScrollTopPriority={'self'} key={'slide2'}
+                    numberOfRows={30}
+                    getRowKey={i => `item${i}`}
+                    initialListSize={30}
+                    renderRow={i => (
+                        <Text style={i % 2 ? styles.itemEvenText : styles.itemOddText}>Item {i}</Text>
+                    )}
+                    getRowStyle={i => (i % 2 ? styles.itemEven : styles.itemOdd)}
           />
         </ViewPager >
       </ScrollView >);
