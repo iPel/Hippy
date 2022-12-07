@@ -9,179 +9,118 @@ import {
 } from '@hippy/react';
 
 const styles = StyleSheet.create({
-  container: {
+  demoWrap: {
+    horizontal: false,
     flex: 1,
-    margin: 20,
-    borderWidth: 1,
-    borderColor: 'black',
+    flexDirection: 'column',
   },
-  matchParent: {
-    flex: 1,
+  banner: {
+    backgroundImage: 'https://user-images.githubusercontent.com/12878546/148736102-7cd9525b-aceb-41c6-a905-d3156219ef16.png',
+    backgroundSize: 'cover',
+    height: 150,
+    justifyContent: 'flex-end',
   },
-  label: {
-    position: 'absolute',
-    left: 5,
-    top: 5,
-    backgroundColor: '#4c9afa',
-    color: 'white',
-    fontSize: 9,
-    height: 12,
-    lineHeight: 12,
-    opacity: .75,
-  },
-  button: {
-    flex: 1,
-    borderColor: 'black',
-    borderWidth: 1,
+  bannerText: {
+    color: 'coral',
     textAlign: 'center',
-    lineHeight: 50,
+  },
+  tabs: {
+    flexDirection: 'row',
+    height: 30,
+  },
+  tabText: {
+    flex: 1,
+    textAlign: 'center',
+    backgroundColor: '#eee',
+    color: '#999',
+  },
+  tabSelected: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#4c9afa',
+  },
+  itemEven: {
+    height: 40,
+    backgroundColor: 'gray',
+  },
+  itemEvenText: {
+    lineHeight: 40,
+    color: 'white',
+    fontSize: 25,
+    textAlign: 'center',
+  },
+  itemOdd: {
+    height: 40,
+  },
+  itemOddText: {
+    lineHeight: 40,
+    fontSize: 25,
+    textAlign: 'center',
   },
 });
-
-function renderTestCases(itemFn, key, priority, width, height) {
-  const childWidth = width - 42;
-  const childHeight = height - 42;
-  const result = [];
-
-  const arr0 = itemFn(`${key}-0`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ListView
-      bounces={false}
-      style={{ flex: 1 }}
-      numberOfRows={arr0.length}
-      renderRow={i => arr0[i]}
-      getRowStyle={i => ({ backgroundColor: i % 2 ? 'white' : '#ccc', width: childWidth, height: childHeight })}
-      getRowKey={i => `${key}-0-${i}`}
-      nestedScrollPriority={priority} />
-    <Label text="list[v]" />
-  </View>);
-  const arr1 = itemFn(`${key}-1`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ListView
-      horizontal={true}
-      bounces={false}
-      style={{ flex: 1 }}
-      numberOfRows={arr1.length}
-      renderRow={i => arr1[i]}
-      getRowStyle={i => ({ backgroundColor: i % 2 ? 'white' : '#ccc', width: childWidth, height: childHeight })}
-      getRowKey={i => `${key}-1-${i}`}
-      nestedScrollPriority={priority} />
-    <Label text="list[h]" />
-  </View>);
-  const arr2 = itemFn(`${key}-2`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ViewPager
-      direction="vertical"
-      style={{ flex: 1 }}
-      initialPage={0}>
-      {arr2.map((item, i) => (<View style={{ flex: 1, backgroundColor: i % 2 ? 'white' : '#ccc' }} key={`${key}-2-${i}`}>{item}</View>))}
-    </ViewPager>
-    <Label text="pager[v]" />
-  </View>);
-  const arr3 = itemFn(`${key}-3`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ViewPager
-      style={{ flex: 1 }}
-      initialPage={0}>
-      {arr3.map((item, i) => (<View style={{ flex: 1, backgroundColor: i % 2 ? 'white' : '#ccc' }} key={`${key}-3-${i}`}>{item}</View>))}
-    </ViewPager>
-    <Label text="pager[h]" />
-  </View>);
-  const arr4 = itemFn(`${key}-4`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ScrollView
-      style={{ flex: 1 }}
-      nestedScrollPriority={priority}>
-      {arr4.map((item, i) => (<View style={{ width: childWidth, height: childHeight, backgroundColor: i % 2 ? 'white' : '#ccc' }} key={`${key}-4-${i}`}>{item}</View>))}
-    </ScrollView>
-    <Label text="scroll[v]" />
-  </View>);
-  const arr5 = itemFn(`${key}-5`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ScrollView
-      horizontal={true}
-      style={{ flex: 1 }}
-      nestedScrollPriority={priority}>
-      {arr5.map((item, i) => (<View style={{ width: childWidth, height: childHeight, backgroundColor: i % 2 ? 'white' : '#ccc' }} key={`${key}-5-${i}`}>{item}</View>))}
-    </ScrollView>
-    <Label text="scroll[h]" />
-  </View>);
-  const arr6 = itemFn(`${key}-6`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ScrollView
-      style={{ flex: 1 }}
-      pagingEnabled={true}
-      nestedScrollPriority={priority}>
-      {arr6.map((item, i) => (<View style={{ width: childWidth, height: childHeight, backgroundColor: i % 2 ? 'white' : '#ccc' }} key={`${key}-6-${i}`}>{item}</View>))}
-    </ScrollView>
-    <Label text="scroll[v, paging]" />
-  </View>);
-  const arr7 = itemFn(`${key}-7`, priority, childWidth, childHeight);
-  result.push(<View style={styles.container}>
-    <ScrollView
-      horizontal={true}
-      style={{ flex: 1 }}
-      pagingEnabled={true}
-      nestedScrollPriority={priority}>
-      {arr7.map((item, i) => (<View style={{ width: childWidth, height: childHeight, backgroundColor: i % 2 ? 'white' : '#ccc' }} key={`${key}-7-${i}`}>{item}</View>))}
-    </ScrollView>
-    <Label text="scroll[h, paging]" />
-  </View>);
-  return result;
-}
-
-function Label({ text }) {
-  return (
-    <Text style={styles.label}> {text} </Text>
-  );
-}
 
 export default class NestedScrollExample extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      width: 300,
-      height: 300,
-      priority: 'self',
-      index: 0,
+      layoutHeight: 0,
+      bannerHeight: 80,
+      currentSlide: 0,
     };
   }
 
+  selectPage(i) {
+    this.setState({ currentSlide: i });
+    this.viewPager?.setPage(i);
+  }
+
   render() {
-    const { width, height, priority, index } = this.state;
-    const fn = (key, priority, width, height) => [
-      // eslint-disable-next-line react/jsx-key
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width, height }}><Text style={{ fontSize: 40 }}>A</Text></View>,
-      // eslint-disable-next-line react/jsx-key
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width, height }}><Text style={{ fontSize: 40 }}>B</Text></View>,
-    ];
-    const fn2 = (key, priority, width, height) => renderTestCases(fn, key, priority, width, height);
-    const fn3 = (key, priority, width, height) => renderTestCases(fn2, key, priority, width, height);
-    const fn4 = (key, priority, width, height) => renderTestCases(fn3, key, priority, width, height);
-    const items = fn4('key', priority, width, height);
+    const { layoutHeight, bannerHeight, currentSlide } = this.state;
+    console.log('currentSlide', currentSlide);
     return (
-      <View style={{ flex: 1 }}>
-        <Text>nestedScrollPriority:</Text>
-        <View style={{ height: 50, flexDirection: 'row' }}>
-          <Text style={ styles.button } onClick={() => this.setState({ priority: 'self' })}>self</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ priority: 'parent' })}>parent</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ priority: 'none' })}>none</Text>
+      <ScrollView
+        style={styles.demoWrap}
+        scrollEventThrottle={50}
+        onLayout={e => this.setState({ layoutHeight: e.layout.height })}
+        onScroll={e => this.setState({ bannerHeight: Math.min(150 - e.contentOffset.y, 80) })}>
+        <View style={styles.banner}>
+          <Text style={[styles.bannerText, { height: bannerHeight, fontSize: bannerHeight }]}>
+            Banner
+          </Text>
         </View>
-        <Text>test case:</Text>
-        <View style={{ height: 50, flexDirection: 'row' }}>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 0 })}>0</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 1 })}>1</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 2 })}>2</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 3 })}>3</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 4 })}>4</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 5 })}>5</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 6 })}>6</Text>
-          <Text style={ styles.button } onClick={() => this.setState({ index: 7 })}>7</Text>
+        <View style={styles.tabs}>
+          <Text
+            key="tab1"
+            style={(currentSlide === 0) ? styles.tabSelected : styles.tabText}
+            onClick={() => this.selectPage(0)}>
+            tab 1
+          </Text>
+          <Text
+            key="tab2"
+            style={(currentSlide === 1) ? styles.tabSelected : styles.tabText}
+            onClick={() => this.selectPage(1)}>
+            tab 2
+          </Text>
         </View>
-        <View style={{ width, height }}>
-          {items[index]}
-        </View>
-      </View>
-    );
+        <ViewPager
+          ref={ref => this.viewPager = ref}
+          initialPage={currentSlide}
+          style={{ height: layoutHeight - 80 }}
+          onPageSelected={e => this.setState({ currentSlide: e.position })}>
+          <ListView nestedScrollTopPriority="parent" key="slide1"
+            numberOfRows={30}
+            getRowKey={i => `item${i}`}
+            renderRow={i => (
+              <Text style={i % 2 ? styles.itemEvenText : styles.itemOddText}>Item {i}</Text>
+            )}
+            getRowStyle={i => (i % 2 ? styles.itemEven : styles.itemOdd)}
+          />
+          <View key="slide2" style={{ flex: 1, justifyContent: 'space-around' }}>
+            <Text style={{ textAlign: 'center' }}>
+              I&apos;m Slide 2
+            </Text>
+          </View>
+        </ViewPager >
+      </ScrollView >);
   }
 }

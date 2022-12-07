@@ -131,7 +131,7 @@ export default [
   },
   {
     path: '/NestedScroll',
-    name: 'NestedScroll 范例',
+    name: 'Nested Scroll 示例',
     component: PAGE_LIST.NestedScroll,
     meta: {
       style: 1,
