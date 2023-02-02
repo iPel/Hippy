@@ -15,6 +15,7 @@
  */
 package com.tencent.mtt.hippy.adapter.http;
 
+import android.os.SystemClock;
 import android.text.TextUtils;
 
 import com.tencent.mtt.hippy.common.HippyArray;
@@ -68,7 +69,7 @@ public class DefaultHttpAdapter implements HippyHttpAdapter {
 
   private void execute(Runnable runnable) {
     if (mExecutorService == null) {
-      mExecutorService = Executors.newFixedThreadPool(3);
+      mExecutorService = Executors.newFixedThreadPool(5);
     }
     mExecutorService.execute(runnable);
   }
@@ -83,11 +84,19 @@ public class DefaultHttpAdapter implements HippyHttpAdapter {
         }
         HippyHttpResponse response = null;
         HttpURLConnection connection = null;
+        long requestStartTime = 0L;
+        long requestEndTime = 0L;
+        int statusCode = -1;
         try {
+          requestStartTime = getCurrentTime();
+
           connection = createConnection(request);
           fillHeader(connection, request);
           fillPostBody(connection, request);
           response = createResponse(connection);
+
+          requestEndTime = getCurrentTime();
+          statusCode = response.getStatusCode();
 
           callback.onTaskSuccess(request, response);
         } catch (Throwable e) {
@@ -99,9 +108,28 @@ public class DefaultHttpAdapter implements HippyHttpAdapter {
           if (connection != null) {
             connection.disconnect();
           }
+          collectReportData(request, requestStartTime, requestEndTime, statusCode);
         }
       }
     });
+  }
+
+  private void collectReportData(HippyHttpRequest request, long requestStartTime,
+    long requestEndTime, int statusCode) {
+    request.setRequestTime(requestEndTime - requestStartTime);
+    request.setFetchTime(getCurrentTime() - requestEndTime);
+    request.setTotalTime(getCurrentTime() - requestStartTime);
+    request.setStatusCode(statusCode);
+
+    requestClose(request);
+  }
+
+  private long getCurrentTime() {
+    return SystemClock.elapsedRealtime();
+  }
+
+  protected void requestClose(HippyHttpRequest request) {
+
   }
 
   HippyHttpResponse createResponse(HttpURLConnection urlConnection) throws Exception {

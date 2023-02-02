@@ -36,6 +36,10 @@ public class HippyHttpRequest {
   private String mMethod = "GET";
   private boolean mInstanceFollowRedirects = false;
   private String mBody;
+  private long requestTime;
+  private long fetchTime;
+  private long totalTime;
+  private int statusCode = -1;
 
   public HippyHttpRequest() {
     //noinspection unchecked,rawtypes
@@ -140,4 +144,35 @@ public class HippyHttpRequest {
     }
   }
 
+  public long getRequestTime() {
+    return requestTime;
+  }
+
+  public void setRequestTime(long requestTime) {
+    this.requestTime = requestTime;
+  }
+
+  public long getFetchTime() {
+    return fetchTime;
+  }
+
+  public void setFetchTime(long fetchTime) {
+    this.fetchTime = fetchTime;
+  }
+
+  public long getTotalTime() {
+    return totalTime;
+  }
+
+  public void setTotalTime(long totalTime) {
+    this.totalTime = totalTime;
+  }
+
+  public int getStatusCode() {
+    return statusCode;
+  }
+
+  public void setStatusCode(int statusCode) {
+    this.statusCode = statusCode;
+  }
 }
