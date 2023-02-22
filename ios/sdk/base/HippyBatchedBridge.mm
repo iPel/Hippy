@@ -77,6 +77,7 @@ typedef NS_ENUM(NSUInteger, HippyBridgeFields) {
     HippyDisplayLink *_displayLink;
     NSDictionary *_dimDic;
     HippyDevManager *_devManager;
+    std::mutex _moduleDataMutex;
 }
 
 @synthesize flowID = _flowID;
@@ -148,7 +149,7 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithDelegate
         sourceCode = source;
         dispatch_group_leave(initModulesAndLoadSource);
     } onProgress:^(HippyLoadingProgress *progressData) {
-#ifdef HIPPY_DEV
+#if HIPPY_DEV
         HippyDevLoadingView *loadingView = [weakSelf moduleForClass:[HippyDevLoadingView class]];
         [loadingView updateProgress:progressData];
 #endif
@@ -210,12 +211,12 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithDelegate
 }
 
 - (void)loadSource:(HippySourceLoadBlock)_onSourceLoad onProgress:(HippySourceLoadProgressBlock)onProgress {
-    [_performanceLogger markStartForTag:HippyPLScriptDownload];
-
+    [_performanceLogger markStartForTag:HippyPLCommonStartup];
+    [_performanceLogger markStartForTag:HippyPLCommonLoadSource];
     HippyPerformanceLogger *performanceLogger = _performanceLogger;
     HippySourceLoadBlock onSourceLoad = ^(NSError *error, NSData *source, int64_t sourceLength) {
-        [performanceLogger markStopForTag:HippyPLScriptDownload];
-        [performanceLogger setValue:sourceLength forTag:HippyPLBundleSize];
+        [performanceLogger markStopForTag:HippyPLCommonLoadSource];
+        [performanceLogger setValue:sourceLength forTag:HippyPLCommonBundleSize];
         _onSourceLoad(error, source, sourceLength);
     };
 
@@ -256,15 +257,18 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithDelegate
  * Used by HippyUIManager
  */
 - (HippyModuleData *)moduleDataForName:(NSString *)moduleName {
+    std::lock_guard<std::mutex> lock(_moduleDataMutex);
     return _moduleDataByName[moduleName];
 }
 
 - (id)moduleForName:(NSString *)moduleName {
+    std::lock_guard<std::mutex> lock(_moduleDataMutex);
     id module = _moduleDataByName[moduleName].instance;
     return module;
 }
 
 - (BOOL)moduleIsInitialized:(Class)moduleClass {
+    std::lock_guard<std::mutex> lock(_moduleDataMutex);
     return _moduleDataByName[HippyBridgeModuleNameForClass(moduleClass)].hasInstance;
 }
 
@@ -481,19 +485,24 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithDelegate
 - (void)setUpDevClientWithName:(NSString *)name {
     if ([self.delegate respondsToSelector:@selector(shouldStartInspector:)]) {
         if ([self.delegate shouldStartInspector:self.parentBridge]) {
-            NSString *ipAddress = nil;
-            NSString *ipPort = nil;
+            HippyDevInfo *devInfo = [[HippyDevInfo alloc] init];
             if ([self.delegate respondsToSelector:@selector(inspectorSourceURLForBridge:)]) {
                 NSURL *url = [self.delegate inspectorSourceURLForBridge:self.parentBridge];
-                ipAddress = [url host];
-                ipPort = [NSString stringWithFormat:@"%@", [url port]];
+                devInfo.scheme = [url scheme];
+                devInfo.ipAddress = [url host];
+                devInfo.port = [NSString stringWithFormat:@"%@", [url port]];
+                devInfo.versionId = [HippyBundleURLProvider parseVersionId:[url path]];
+                [devInfo parseWsURLWithURLQuery:[url query]];
             }
             else {
                 HippyBundleURLProvider *bundleURLProvider = [HippyBundleURLProvider sharedInstance];
-                ipAddress = bundleURLProvider.localhostIP;
-                ipPort = bundleURLProvider.localhostPort;
+                devInfo.scheme = bundleURLProvider.scheme;
+                devInfo.ipAddress = bundleURLProvider.localhostIP;
+                devInfo.port = bundleURLProvider.localhostPort;
+                devInfo.versionId = bundleURLProvider.versionId;
+                devInfo.wsURL = bundleURLProvider.wsURL;
             }
-            _devManager = [[HippyDevManager alloc] initWithBridge:self.parentBridge devIPAddress:ipAddress devPort:ipPort contextName:name];
+            _devManager = [[HippyDevManager alloc] initWithBridge:self.parentBridge devInfo:devInfo contextName:name];
         }
     }
 }
@@ -532,8 +541,8 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithDelegate
         return;
     }
 
-    [self->_performanceLogger markStartForTag:HippyExecuteSource];
-    [self enqueueApplicationScript:sourceCode url:self.bundleURL onComplete:^(NSError *loadError) {
+    [self.performanceLogger markStartForTag:HippyPLCommonExecuteSource];
+    [self enqueueApplicationScript:sourceCode url:self.bundleURL isCommonBundle:YES onComplete:^(NSError *loadError) {
         if (!self->_valid) {
             return;
         }
@@ -546,39 +555,19 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithDelegate
             return;
         }
 
+        [self.performanceLogger markStopForTag:HippyPLBridgeStartup];
+        [self.performanceLogger markStopForTag:HippyPLCommonExecuteSource];
+        [self.performanceLogger markStopForTag:HippyPLCommonStartup];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
         // Register the display link to start sending js calls after everything is setup
         //        NSRunLoop *targetRunLoop = [self->_javaScriptExecutor isKindOfClass:[HippyJSCExecutor class]] ? [NSRunLoop currentRunLoop] :
         //        [NSRunLoop mainRunLoop];
         // hipp core功能中线程全部由c++创建，因此将所有displayLink放在mainRunLoop
-        [self->_displayLink addToRunLoop:[NSRunLoop mainRunLoop]];
-
-        // Log metrics about native requires during the bridge startup.
-        uint64_t nativeRequiresCount = [self->_performanceLogger valueForTag:HippyPLRAMNativeRequiresCount];
-        [self->_performanceLogger setValue:nativeRequiresCount forTag:HippyPLRAMStartupNativeRequiresCount];
-        uint64_t nativeRequires = [self->_performanceLogger valueForTag:HippyPLRAMNativeRequires];
-        [self->_performanceLogger setValue:nativeRequires forTag:HippyPLRAMStartupNativeRequires];
-
-        [self->_performanceLogger markStopForTag:HippyPLBridgeStartup];
-        [self->_performanceLogger markStopForTag:HippyExecuteSource];
-        // Perform the notification on the main thread, so we can't run into
-        // timing issues with HippyRootView
-
-#ifdef DEBUG
-        NSUInteger HippyPLScriptDownloads = (NSUInteger)[self->_performanceLogger durationForTag:HippyPLScriptDownload];
-        NSUInteger HippyPLNativeModuleInits = (NSUInteger)[self->_performanceLogger durationForTag:HippyPLNativeModuleInit];
-        NSUInteger HippyPLJSCExecutorSetups = (NSUInteger)[self->_performanceLogger durationForTag:HippyPLJSCExecutorSetup];
-        NSUInteger HippyPLNativeModuleInjectConfigs = (NSUInteger)[self->_performanceLogger durationForTag:HippyPLNativeModuleInjectConfig];
-        NSUInteger HippyPLNativeModulePrepareConfigs = (NSUInteger)[self->_performanceLogger durationForTag:HippyPLNativeModulePrepareConfig];
-        NSUInteger HippyExecuteSources = (NSUInteger)[self->_performanceLogger durationForTag:HippyExecuteSource];
-        NSUInteger HippyPLBridgeStartups = (NSUInteger)[self->_performanceLogger durationForTag:HippyPLBridgeStartup];
-
-        NSLog(@"common cost: read source:%@ init module:%@ executor setups:%@ inject config:%@ prepare config:%@ load source:%@ bridge starup:%@",
-            @(HippyPLScriptDownloads), @(HippyPLNativeModuleInits), @(HippyPLJSCExecutorSetups), @(HippyPLNativeModuleInjectConfigs),
-            @(HippyPLNativeModulePrepareConfigs), @(HippyExecuteSources), @(HippyPLBridgeStartups));
-#endif
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:HippyJavaScriptDidLoadNotification object:self->_parentBridge
+        //fixIssue: https://github.com/Tencent/Hippy/issues/1788, 放到主线程运行
+            [self->_displayLink addToRunLoop:[NSRunLoop mainRunLoop]];
+            [[NSNotificationCenter defaultCenter] postNotificationName:HippyJavaScriptDidLoadNotification
+                                                                object:self->_parentBridge
                                                               userInfo:@ { @"bridge": self }];
         });
 
@@ -763,7 +752,11 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
         [HippyBridge setCurrentBridge:nil];
     }
     if (_devManager) {
-        [_devManager closeWebSocket];
+        HippyDevCloseType closeType = HippyDevCloseTypeClosePage;
+        if (self.invalidateReason == HippyInvalidateReasonReload) {
+            closeType = HippyDevCloseTypeReload;
+        }
+        [_devManager closeWebSocket:closeType];
     }
 
     // Invalidate modules
@@ -791,10 +784,10 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
     }
 
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        [self->_displayLink invalidate];
         [self->_javaScriptExecutor executeBlockOnJavaScriptQueue:^{
-            [self->_displayLink invalidate];
+            std::lock_guard<std::mutex> lock(self->_moduleDataMutex);
             self->_displayLink = nil;
-
             [self->_javaScriptExecutor invalidate];
             self->_javaScriptExecutor = nil;
 
@@ -915,11 +908,17 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
     return turboModule;
 }
 
-- (void)enqueueApplicationScript:(NSData *)script url:(NSURL *)url onComplete:(HippyJavaScriptCompleteBlock)onComplete {
+- (void)enqueueApplicationScript:(NSData *)script
+                             url:(NSURL *)url
+                  isCommonBundle:(BOOL)isCommonBundle
+                      onComplete:(HippyJavaScriptCompleteBlock)onComplete {
     HippyAssert(onComplete != nil, @"onComplete block passed in should be non-nil");
     _errorOccured = NO;
     // HippyProfileBeginFlowEvent();
-    [_javaScriptExecutor executeApplicationScript:script sourceURL:url onComplete:^(NSError *scriptLoadError) {
+    [_javaScriptExecutor executeApplicationScript:script
+                                        sourceURL:url
+                                   isCommonBundle:isCommonBundle
+                                       onComplete:^(NSError *scriptLoadError) {
         // HippyProfileEndFlowEvent();
         HippyAssertJSThread();
         if (scriptLoadError) {
@@ -1026,8 +1025,10 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
     }
 
     @autoreleasepool {
-        NSMapTable *buckets = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsStrongMemory
-                                                            capacity:_moduleDataByName.count];
+        NSMapTable *buckets =
+            [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory
+                                      valueOptions:NSPointerFunctionsStrongMemory
+                                          capacity:_moduleDataByName.count];
 
         [moduleIDs enumerateObjectsUsingBlock:^(NSNumber *moduleID, NSUInteger i, __unused BOOL *stop) {
             HippyModuleData *moduleData = self->_moduleDataByID[moduleID.integerValue];
@@ -1043,18 +1044,23 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
         for (dispatch_queue_t queue in buckets) {
             // HippyProfileBeginFlowEvent();
 
+            __weak id weakSelf = self;
             dispatch_block_t block = ^{
                 // HippyProfileEndFlowEvent();
-
+                id strongSelf = weakSelf;
+                if (!strongSelf) {
+                    return;
+                }
                 NSOrderedSet *calls = [buckets objectForKey:queue];
                 // HIPPY_PROFILE_BEGIN_EVENT(HippyProfileTagAlways, @"-[HippyBatchedBridge handleBuffer:]", (@{
                 //        @"calls": @(calls.count),
                 //      }));
-
                 @autoreleasepool {
                     for (NSNumber *indexObj in calls) {
                         NSUInteger index = indexObj.unsignedIntegerValue;
-                        [self callNativeModule:[moduleIDs[index] integerValue] method:[methodIDs[index] integerValue] params:paramsArrays[index]];
+                        [strongSelf callNativeModule:[moduleIDs[index] integerValue]
+                                              method:[methodIDs[index] integerValue]
+                                              params:paramsArrays[index]];
                     }
                 }
 
@@ -1069,6 +1075,7 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
 }
 
 - (void)partialBatchDidFlush {
+    std::lock_guard<std::mutex> lock(_moduleDataMutex);
     NSArray<HippyModuleData *> *moduleDataByID = _valid ? _moduleDataByID : [_moduleDataByID copy];
     for (HippyModuleData *moduleData in moduleDataByID) {
         if (moduleData.hasInstance && moduleData.implementsPartialBatchDidFlush) {
@@ -1080,6 +1087,7 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
 }
 
 - (void)batchDidComplete {
+    std::lock_guard<std::mutex> lock(_moduleDataMutex);
     NSArray<HippyModuleData *> *moduleDataByID = _valid ? _moduleDataByID : [_moduleDataByID copy];
     for (HippyModuleData *moduleData in moduleDataByID) {
         if (moduleData.hasInstance && moduleData.implementsBatchDidComplete) {
@@ -1097,42 +1105,70 @@ HIPPY_NOT_IMPLEMENTED(-(instancetype)initWithBundleURL
     //    if (!_valid) {
     //        return nil;
     //    }
-    NSArray<HippyModuleData *> *moduleDataByID = [_moduleDataByID copy];
-    if (moduleID >= [moduleDataByID count]) {
-        HippyLogError(@"moduleID %lu exceed range of moduleDataByID %lu, bridge is valid %ld", moduleID, [moduleDataByID count], (long)_valid);
-        return nil;
-    }
-    HippyModuleData *moduleData = moduleDataByID[moduleID];
-    if (HIPPY_DEBUG && !moduleData) {
-        HippyLogError(@"No module found for id '%lu'", (unsigned long)moduleID);
-        return nil;
-    }
-    // not for UI Actions if NO==_valid
-    if (!_valid) {
-        if ([[moduleData name] isEqualToString:@"UIManager"]) {
+    id<HippyBridgeMethod> method = nil;
+    HippyModuleData *moduleData = nil;
+    {
+        std::lock_guard<std::mutex> lock(_moduleDataMutex);
+        NSArray<HippyModuleData *> *moduleDataByID = [_moduleDataByID copy];
+        if (moduleID >= [moduleDataByID count]) {
+            if (_valid) {
+                HippyLogError(@"moduleID %lu exceed range of moduleDataByID %lu, bridge is valid %ld", moduleID, [moduleDataByID count], (long)_valid);
+            }
+            return nil;
+        }
+        moduleData = moduleDataByID[moduleID];
+        if (HIPPY_DEBUG && !moduleData) {
+            if (_valid) {
+                HippyLogError(@"No module found for id '%lu'", (unsigned long)moduleID);
+            }
+            return nil;
+        }
+        // not for UI Actions if NO==_valid
+        if (!_valid) {
+            if ([[moduleData name] isEqualToString:@"UIManager"]) {
+                return nil;
+            }
+        }
+        NSArray<id<HippyBridgeMethod>> *methods = [moduleData.methods copy];
+        if (methodID >= [methods count]) {
+            if (_valid) {
+                HippyLogError(@"methodID %lu exceed range of moduleData.methods %lu, bridge is valid %ld", moduleID, [methods count], (long)_valid);
+            }
+            return nil;
+        }
+        method = methods[methodID];
+        if (HIPPY_DEBUG && !method) {
+            if (_valid) {
+                HippyLogError(@"Unknown methodID: %lu for module: %lu (%@)", (unsigned long)methodID, (unsigned long)moduleID, moduleData.name);
+            }
             return nil;
         }
     }
-    if (methodID >= [moduleData.methods count]) {
-        HippyLogError(@"methodID %lu exceed range of moduleData.methods %lu, bridge is valid %ld", moduleID, [moduleData.methods count], (long)_valid);
-        return nil;
-    }
-    id<HippyBridgeMethod> method = moduleData.methods[methodID];
-    if (HIPPY_DEBUG && !method) {
-        HippyLogError(@"Unknown methodID: %lu for module: %lu (%@)", (unsigned long)methodID, (unsigned long)moduleID, moduleData.name);
-        return nil;
-    }
-
     @try {
-        return [method invokeWithBridge:self module:moduleData.instance arguments:params];
+        BOOL shouldInvoked = YES;
+        if ([self.methodInterceptor respondsToSelector:@selector(shouldInvokeWithModuleName:methodName:arguments:argumentsValues:containCallback:)]) {
+            HippyFunctionType funcType = [method functionType];
+            BOOL containCallback = (HippyFunctionTypeCallback == funcType|| HippyFunctionTypePromise == funcType);
+            NSArray<id<HippyBridgeArgument>> *arguments = [method arguments];
+            shouldInvoked = [self.methodInterceptor shouldInvokeWithModuleName:moduleData.name
+                                                                    methodName:method.JSMethodName
+                                                                     arguments:arguments
+                                                               argumentsValues:params
+                                                               containCallback:containCallback];
+        }
+        if (shouldInvoked) {
+            return [method invokeWithBridge:self module:moduleData.instance arguments:params];
+        }
+        else {
+            return nil;
+        }
     } @catch (NSException *exception) {
         // Pass on JS exceptions
         if ([exception.name hasPrefix:HippyFatalExceptionName]) {
             @throw exception;
         }
 
-        NSString *message = [NSString stringWithFormat:@"Exception '%@' was thrown while invoking %@ on target %@ with params %@", exception,
-                                      method.JSMethodName, moduleData.name, params];
+        NSString *message = [NSString stringWithFormat:@"Exception '%@' was thrown while invoking %@ on target %@ with params %@", exception, method.JSMethodName, moduleData.name, params];
         NSError *error = HippyErrorWithMessageAndModuleName(message, self.moduleName);
         if (self.parentBridge.useCommonBridge) {
             NSDictionary *errorInfo = @{ NSLocalizedDescriptionKey: message, @"module": self.parentBridge.moduleName ?: @"" };

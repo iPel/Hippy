@@ -63,4 +63,10 @@ public class DefaultEngineMonitorAdapter implements HippyEngineMonitorAdapter {
   public void reportClickEvent(Object object, boolean isCustomEvent) {
 
   }
+
+  @Override
+  public void reportCustomMonitorPoint(HippyRootView rootView, String eventName,
+      long timeMillis) {
+
+  }
 }

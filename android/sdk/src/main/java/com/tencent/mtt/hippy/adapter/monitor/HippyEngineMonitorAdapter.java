@@ -44,4 +44,6 @@ public interface HippyEngineMonitorAdapter {
   void reportGestureEventCallStack(String funcName, String msg);
 
   void reportClickEvent(Object object, boolean isCustomEvent);
+
+  void reportCustomMonitorPoint(HippyRootView rootView, String eventName, long timeMillis);
 }
