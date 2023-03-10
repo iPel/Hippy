@@ -112,7 +112,10 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 			if (isAttached())
 			{
 				onDrawableDetached();
+				resetContent();
 				fetchImageByUrl(mUrl, SOURCE_TYPE_SRC);
+			} else {
+				mSourceDrawable = null;
 			}
 		}
 	}
@@ -184,6 +187,16 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 		if (!TextUtils.equals(mDefaultSourceUrl, defaultSource))
 		{
 			mDefaultSourceUrl = defaultSource;
+            if (mDefaultSourceDrawable != null) {
+                if (isAttached()) {
+                    mDefaultSourceDrawable.onDrawableDetached();
+                }
+                mDefaultSourceDrawable = null;
+            }
+            if (mSourceDrawable == null) {
+                mContentDrawable = null;
+                resetBackgroundDrawable();
+            }
 			fetchImageByUrl(mDefaultSourceUrl, SOURCE_TYPE_DEFAULT_SRC);
 		}
 	}
@@ -386,11 +399,12 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 	{
 		mIsAttached = true;
 		super.onAttachedToWindow();
-		if (mDefaultSourceDrawable != null && shouldFetchImage())
-		{
-			mDefaultSourceDrawable.onDrawableAttached();
-			setContent(SOURCE_TYPE_DEFAULT_SRC);
-		}
+        if (mDefaultSourceDrawable != null) {
+            mDefaultSourceDrawable.onDrawableAttached();
+        }
+        if (shouldFetchImage()) {
+            resetContent();
+        }
 
 		fetchImageByUrl(mUrl, SOURCE_TYPE_SRC);
 		onDrawableAttached();
@@ -414,9 +428,13 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 
 	protected void resetContent()
 	{
-		mContentDrawable = null;
-		mBGDrawable = null;
-		super.setBackgroundDrawable(null);
+        mSourceDrawable = null;
+        if (mDefaultSourceDrawable != null) {
+            updateContentDrawableProperty(SOURCE_TYPE_DEFAULT_SRC);
+        } else {
+            mContentDrawable = null;
+        }
+        resetBackgroundDrawable();
 	}
 
 	protected void onSetContent(String url)
@@ -459,22 +477,7 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 
 			onSetContent(mUrl);
 			updateContentDrawableProperty(sourceType);
-
-			if (mBGDrawable != null)
-			{
-				if (mContentDrawable instanceof ContentDrawable)
-				{
-					((ContentDrawable) mContentDrawable).setBorder(mBGDrawable.getBorderRadiusArray(), mBGDrawable.getBorderWidthArray());
-					((ContentDrawable) mContentDrawable).setShadowOffsetX(mBGDrawable.getShadowOffsetX());
-					((ContentDrawable) mContentDrawable).setShadowOffsetY(mBGDrawable.getShadowOffsetY());
-					((ContentDrawable) mContentDrawable).setShadowRadius(mBGDrawable.getShadowRadius());
-				}
-				setBackgroundDrawable(new LayerDrawable(new Drawable[] { mBGDrawable, mContentDrawable }));
-			}
-			else
-			{
-				setBackgroundDrawable(mContentDrawable);
-			}
+			resetBackgroundDrawable();
 			afterSetContent(mUrl);
 		}
 	}
@@ -497,6 +500,12 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 			((ContentDrawable) mContentDrawable).setScaleType(mScaleType);
 			((ContentDrawable) mContentDrawable).setImagePositionX(mImagePositionX);
 			((ContentDrawable) mContentDrawable).setImagePositionY(mImagePositionY);
+		}
+		if (mBGDrawable != null) {
+			((ContentDrawable) mContentDrawable).setBorder(mBGDrawable.getBorderRadiusArray(), mBGDrawable.getBorderWidthArray());
+			((ContentDrawable) mContentDrawable).setShadowOffsetX(mBGDrawable.getShadowOffsetX());
+			((ContentDrawable) mContentDrawable).setShadowOffsetY(mBGDrawable.getShadowOffsetY());
+			((ContentDrawable) mContentDrawable).setShadowRadius(mBGDrawable.getShadowRadius());
 		}
 	}
 
@@ -696,5 +705,24 @@ public class AsyncImageView extends ViewGroup implements Animator.AnimatorListen
 			}
 		}
 		return mBGDrawable;
+	}
+
+	private void resetBackgroundDrawable() {
+		ArrayList<Drawable> drawableList = new ArrayList<>();
+		if (mBGDrawable != null) {
+			drawableList.add(mBGDrawable);
+		}
+		if (mContentDrawable != null) {
+			drawableList.add(mContentDrawable);
+		}
+		super.setBackground(null);
+		if (drawableList.size() > 0) {
+			Drawable[] drawables = new Drawable[drawableList.size()];
+			for (int i = 0; i < drawableList.size(); i++) {
+				drawables[i] = drawableList.get(i);
+			}
+			LayerDrawable layerDrawable = new LayerDrawable(drawables);
+			super.setBackground(layerDrawable);
+		}
 	}
 }

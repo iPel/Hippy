@@ -62,9 +62,6 @@ public class HippyImageView extends AsyncImageView implements CommonBorder, Hipp
   public static final String IMAGE_VIEW_OBJ = "viewobj";
 
   private HippyMap initProps = new HippyMap();
-  private boolean mHasSetTempBackgroundColor = false;
-  private boolean mUserHasSetBackgroudnColor = false;
-  private int mUserSetBackgroundColor = Color.TRANSPARENT;
 
   /**
    * 播放GIF动画的关键类
@@ -155,10 +152,10 @@ public class HippyImageView extends AsyncImageView implements CommonBorder, Hipp
 
   @Override
   protected void resetContent() {
-    super.resetContent();
     mGifMovie = null;
     mGifProgress = 0;
     mGifLastPlayTime = -1;
+    super.resetContent();
   }
 
   @Override
@@ -236,75 +233,6 @@ public class HippyImageView extends AsyncImageView implements CommonBorder, Hipp
           handleImageRequest(null, sourceType, throwable);
         }
       }, param);
-    }
-  }
-
-  public void setBackgroundColor(int backgroundColor) {
-    mUserHasSetBackgroudnColor = true;
-    mUserSetBackgroundColor = backgroundColor;
-    super.setBackgroundColor(backgroundColor);
-  }
-
-  @Override
-  protected void onFetchImage(String url) {
-    if (mContentDrawable instanceof ContentDrawable &&
-        ((ContentDrawable) mContentDrawable).getSourceType() == SOURCE_TYPE_DEFAULT_SRC) {
-      return;
-    }
-
-    Drawable oldBGDrawable = getBackground();
-    resetContent();
-
-    if (url != null && (UrlUtils.isWebUrl(url) || UrlUtils.isFileUrl(url))) {
-      int defaultBackgroundColor = Color.LTGRAY;
-      if (mUserHasSetBackgroudnColor) {
-        defaultBackgroundColor = mUserSetBackgroundColor;
-      }
-
-      if (oldBGDrawable instanceof CommonBackgroundDrawable) {
-        ((CommonBackgroundDrawable) oldBGDrawable).setBackgroundColor(defaultBackgroundColor);
-        setCustomBackgroundDrawable((CommonBackgroundDrawable) oldBGDrawable);
-      } else if (oldBGDrawable instanceof LayerDrawable) {
-        LayerDrawable layerDrawable = (LayerDrawable) oldBGDrawable;
-        int numberOfLayers = layerDrawable.getNumberOfLayers();
-
-        if (numberOfLayers > 0) {
-          Drawable bgDrawable = layerDrawable.getDrawable(0);
-          if (bgDrawable instanceof CommonBackgroundDrawable) {
-            ((CommonBackgroundDrawable) bgDrawable).setBackgroundColor(defaultBackgroundColor);
-            setCustomBackgroundDrawable((CommonBackgroundDrawable) bgDrawable);
-          }
-        }
-
-        if (numberOfLayers > 1) {
-          Drawable layer1Drawable = ((LayerDrawable) oldBGDrawable).getDrawable(1);
-          if (layer1Drawable instanceof HippyContentDrawable) {
-            HippyContentDrawable layer1 = (HippyContentDrawable) layer1Drawable;
-            if (mBGDrawable != null) {
-              layer1.setBorder(mBGDrawable.getBorderRadiusArray(), mBGDrawable.getBorderWidthArray());
-              setBackgroundDrawable(new LayerDrawable(new Drawable[]{mBGDrawable, layer1}));
-            } else {
-              setBackgroundDrawable(layer1Drawable);
-            }
-          }
-        }
-      }
-      super.setBackgroundColor(defaultBackgroundColor);
-      mHasSetTempBackgroundColor = true;
-    }
-  }
-
-  @Override
-  protected void afterSetContent(String url) {
-    restoreBackgroundColorAfterSetContent();
-  }
-
-  @Override
-  protected void restoreBackgroundColorAfterSetContent() {
-    if (mBGDrawable != null && mHasSetTempBackgroundColor) {
-      int defaultBackgroundColor = Color.TRANSPARENT;
-      mBGDrawable.setBackgroundColor(defaultBackgroundColor);
-      mHasSetTempBackgroundColor = false;
     }
   }
 
