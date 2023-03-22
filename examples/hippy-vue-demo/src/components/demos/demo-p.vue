@@ -1,53 +1,226 @@
 <template>
   <div class="p-demo">
-    <label>不带样式：</label>
-    <p
-      class="p-demo-content"
-      @touchstart="onTouchTextStart"
-      @touchmove="onTouchTextMove"
-      @touchend="onTouchTextEnd"
-    >
-      这是最普通的一行文字 - 当前 touch 状态: {{ labelTouchStatus }}
-    </p>
-    <label>颜色：</label>
-    <p class="p-demo-1 p-demo-content">
-      这行文字改变了颜色
-    </p>
-    <label>尺寸：</label>
-    <p class="p-demo-2 p-demo-content">
-      这行改变了大小
-    </p>
-    <label>粗体：</label>
-    <p class="p-demo-3 p-demo-content">
-      这行加粗了
-    </p>
-    <label>下划线：</label>
-    <p class="p-demo-4 p-demo-content">
-      这里有条下划线
-    </p>
-    <label>删除线：</label>
-    <p class="p-demo-5 p-demo-content">
-      这里有条删除线
-    </p>
-    <label>自定义字体：</label>
-    <p class="p-demo-6 p-demo-content">
-      腾讯字体 Hippy
-    </p>
-    <label>文字阴影：</label>
-    <p
-      class="p-demo-7 p-demo-content"
-      :style="textShadow"
-      @click="changeTextShadow"
-    >
-      这里是文字灰色阴影
-    </p>
+    <div>
+      <label>不带样式：</label>
+      <p
+        class="p-demo-content"
+        @touchstart="onTouchTextStart"
+        @touchmove="onTouchTextMove"
+        @touchend="onTouchTextEnd"
+      >
+        这是最普通的一行文字 - 当前 touch 状态: {{ labelTouchStatus }}
+      </p>
+      <label>颜色：</label>
+      <p class="p-demo-1 p-demo-content">
+        这行文字改变了颜色
+      </p>
+      <label>尺寸：</label>
+      <p class="p-demo-2 p-demo-content">
+        这行改变了大小
+      </p>
+      <label>粗体：</label>
+      <p class="p-demo-3 p-demo-content">
+        这行加粗了
+      </p>
+      <label>下划线：</label>
+      <p class="p-demo-4 p-demo-content">
+        这里有条下划线
+      </p>
+      <label>删除线：</label>
+      <p class="p-demo-5 p-demo-content">
+        这里有条删除线
+      </p>
+      <label>自定义字体：</label>
+      <p class="p-demo-6 p-demo-content">
+        腾讯字体 Hippy
+      </p>
+      <label>文字阴影：</label>
+      <p
+        class="p-demo-7 p-demo-content"
+        :style="textShadow"
+        @click="changeTextShadow"
+      >
+        这里是文字灰色阴影
+      </p>
+      <label>vertical-align</label>
+      <div class="p-demo-content">
+        <p style="line-height: 50; background-color: #40b883; padding-horizontal: 10; padding-vertical: 5;">
+          <img
+            style="width: 24; height: 24; vertical-align: top;"
+            :src="img2"
+          >
+          <img
+            style="width: 18; height: 12; vertical-align: middle;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 12; vertical-align: baseline;"
+            :src="img2"
+          >
+          <img
+            style="width: 36; height: 24; vertical-align: bottom;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-align: top;"
+            :src="img3"
+          >
+          <img
+            style="width: 18; height: 12; vertical-align: middle;"
+            :src="img3"
+          >
+          <img
+            style="width: 24; height: 12; vertical-align: baseline;"
+            :src="img3"
+          >
+          <img
+            style="width: 36; height: 24; vertical-align: bottom;"
+            :src="img3"
+          >
+          <span style="font-size: 16; vertical-align: top;">字</span>
+          <span style="font-size: 16; vertical-align: middle;">字</span>
+          <span style="font-size: 16; vertical-align: baseline;">字</span>
+          <span style="font-size: 16; vertical-align: bottom;">字</span>
+        </p>
+        <p v-if="Platform === 'android'">
+          legacy mode:
+        </p>
+        <p
+          v-if="Platform === 'android'"
+          style="lineHeight: 50; background-color: #40b883; padding-horizontal: 10; padding-vertical: 5;"
+        >
+          <img
+            style="width: 24; height: 24; vertical-alignment: 0;"
+            :src="img2"
+          >
+          <img
+            style="width: 18; height: 12; vertical-alignment: 1;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 12; vertical-alignment: 2;"
+            :src="img2"
+          >
+          <img
+            style="width: 36; height: 24; vertical-alignment: 3;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; top: -10;"
+            :src="img3"
+          >
+          <img
+            style="width: 18; height: 12; top: -5;"
+            :src="img3"
+          >
+          <img
+            style="width: 24; height: 12;"
+            :src="img3"
+          >
+          <img
+            style="width: 36; height: 24; top: 5;"
+            :src="img3"
+          >
+          <span style="font-size: 16;">字</span>
+          <span style="font-size: 16;">字</span>
+          <span style="font-size: 16;">字</span>
+          <span style="font-size: 16;">字</span>
+        </p>
+      </div>
+      <label>tint-color & background-color</label>
+      <div class="p-demo-content">
+        <p style="background-color: #40b883; padding-horizontal: 10; padding-vertical: 5;">
+          <img
+            style="width: 24; height: 24; vertical-align: middle; tint-color: orange;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-align: middle; tint-color: orange; background-color: #ccc;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-align: middle; background-color: #ccc;"
+            :src="img2"
+          >
+          <span style="vertical-align: middle; background-color: #99f;">text</span>
+        </p>
+        <p v-if="Platform === 'android'">
+          legacy mode:
+        </p>
+        <p
+          v-if="Platform === 'android'"
+          style="background-color: #40b883; padding-horizontal: 10; padding-vertical: 5;"
+        >
+          <img
+            style="width: 24; height: 24; tint-color: orange;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; tint-color: orange; background-color: #ccc;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; background-color: #ccc;"
+            :src="img2"
+          >
+        </p>
+      </div>
+      <label>margin</label>
+      <div class="p-demo-content">
+        <p style="line-height: 50; background-color: #40b883; padding-horizontal: 10; padding-vertical: 5;">
+          <img
+            style="width: 24; height: 24; vertical-align: top; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-align: middle; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-align: baseline; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-align: bottom; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+        </p>
+        <p v-if="Platform === 'android'">
+          legacy mode:
+        </p>
+        <p
+          v-if="Platform === 'android'"
+          style="line-height: 50; background-color: #40b883; padding-horizontal: 10; padding-vertical: 5;"
+        >
+          <img
+            style="width: 24; height: 24; vertical-alignment: 0; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-alignment: 1; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-alignment: 2; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+          <img
+            style="width: 24; height: 24; vertical-alignment: 3; background-color: #ccc; margin: 5;"
+            :src="img2"
+          >
+        </p>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import Vue from 'vue';
+
 export default {
   data() {
     return {
+      Platform: Vue.Native.Platform,
       textShadowIndex: 0,
       isClicked: false,
       isPressing: false,
@@ -63,6 +236,12 @@ export default {
         textShadowRadius: 3,
         textShadowColor: 'grey',
       },
+      img2: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAANlBMVEUAAAAAAAAAAAAAAAAAAAAAAAAA
+        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC3dmhyAAAAEnRSTlMA/QpX7WQU2m27pi3Ej9KEQXaD5HhjAAAAqklEQVQoz41
+        SWxLDIAh0RcFXTHL/yzZSO01LMpP9WJEVUNA9gfdXTioCSKE/kQQTQmf/ArRYva+xAcuPP37seFII2L7FN4BmXdHzlEPIpDHiZ0A7eIViPc
+        w2QwqipkvMSdNEFBUE1bmMNOyE7FyFaIkAP4jHhhG80lvgkzBODTKpwhRMcexuR7fXzcp08UDq6GRbootp4oRtO3NNpd4NKtnR9hB6oaefw
+        eIFQU0EfnGDRoQAAAAASUVORK5CYII=`,
+      img3: 'https://user-images.githubusercontent.com/12878546/148736255-7193f89e-9caf-49c0-86b0-548209506bd6.gif',
     };
   },
   methods: {
@@ -100,6 +279,12 @@ export default {
 </script>
 
 <style scoped>
+.p-demo {
+  margin: 7px;
+  overflow-y: scroll;
+  flex: 1;
+  flex-direction: column;
+}
 .p-demo .p-demo-content {
   margin: 20px;
 }
