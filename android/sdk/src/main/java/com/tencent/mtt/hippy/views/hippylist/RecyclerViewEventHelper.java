@@ -222,7 +222,8 @@ public class RecyclerViewEventHelper extends OnScrollListener implements OnLayou
     private boolean isVerticalReachEnd() {
       RecyclerView.LayoutManager manager;
       if (preloadItemNumber > 0 && (manager = hippyRecyclerView.getLayoutManager()) instanceof LinearLayoutManager) {
-        return ((LinearLayoutManager) manager).findLastVisibleItemPosition() >= manager.getItemCount() - preloadItemNumber;
+        int lastVisible = ((LinearLayoutManager) manager).findLastVisibleItemPosition();
+        return lastVisible != RecyclerView.NO_POSITION && lastVisible >= manager.getItemCount() - preloadItemNumber;
       }
       return !hippyRecyclerView.canScrollVertically(1);
     }
@@ -233,7 +234,8 @@ public class RecyclerViewEventHelper extends OnScrollListener implements OnLayou
     private boolean isHorizontalReachEnd() {
       RecyclerView.LayoutManager manager;
       if (preloadItemNumber > 0 && (manager = hippyRecyclerView.getLayoutManager()) instanceof LinearLayoutManager) {
-        return ((LinearLayoutManager) manager).findLastVisibleItemPosition() >= manager.getItemCount() - preloadItemNumber;
+        int lastVisible = ((LinearLayoutManager) manager).findLastVisibleItemPosition();
+        return lastVisible != RecyclerView.NO_POSITION && lastVisible >= manager.getItemCount() - preloadItemNumber;
       }
       return !hippyRecyclerView.canScrollHorizontally(1);
     }
