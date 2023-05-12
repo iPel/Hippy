@@ -127,12 +127,12 @@ public class HippyCoreAPI implements HippyAPIProvider {
         return new ImageLoaderModule(context);
       }
     });
-    modules.put(NetworkModule.class, new Provider<HippyNativeModuleBase>() {
+/*    modules.put(NetworkModule.class, new Provider<HippyNativeModuleBase>() {
       @Override
       public HippyNativeModuleBase get() {
         return new NetworkModule(context);
       }
-    });
+    });*/
     modules.put(DeviceEventModule.class, new Provider<HippyNativeModuleBase>() {
       @Override
       public HippyNativeModuleBase get() {
