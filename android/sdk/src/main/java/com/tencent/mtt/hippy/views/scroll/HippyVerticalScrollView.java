@@ -351,8 +351,11 @@ public class HippyVerticalScrollView extends NestedScrollView implements HippyVi
   }
 
   @Override
-  public void scrollToInitContentOffset() {
+  public void updateContentOffset() {
     if (hasCompleteFirstBatch) {
+      // When the ScrollView content becomes shorter,
+      // scrollTo() can correct the scroll position to the new end
+      scrollTo(getScrollX(), getScrollY());
       return;
     }
 
