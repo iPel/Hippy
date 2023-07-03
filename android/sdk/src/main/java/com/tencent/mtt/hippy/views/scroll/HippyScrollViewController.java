@@ -9,6 +9,7 @@ import com.tencent.mtt.hippy.annotation.HippyController;
 import com.tencent.mtt.hippy.annotation.HippyControllerProps;
 import com.tencent.mtt.hippy.common.HippyArray;
 import com.tencent.mtt.hippy.common.HippyMap;
+import com.tencent.mtt.hippy.dom.node.NodeProps;
 import com.tencent.mtt.hippy.uimanager.ControllerManager;
 import com.tencent.mtt.hippy.uimanager.HippyGroupController;
 import com.tencent.mtt.hippy.uimanager.RenderNode;
@@ -116,6 +117,13 @@ public class HippyScrollViewController<T extends ViewGroup & HippyScrollView> ex
   @HippyControllerProps(name = "initialContentOffset", defaultType = HippyControllerProps.NUMBER, defaultNumber = 0)
   public void setInitialContentOffset(HippyScrollView view, int offset) {
     view.setInitialContentOffset((int)PixelUtil.dp2px(offset));
+  }
+
+  @HippyControllerProps(name = NodeProps.DISALLOW_INTERCEPT_TOUCH_EVENT, defaultType = HippyControllerProps.BOOLEAN, defaultBoolean = true)
+  public void setDisallowInterceptTouchEvent(HippyScrollView view, boolean disallow) {
+    if (view instanceof HippyVerticalScrollView) {
+      ((HippyVerticalScrollView) view).setDisallowInterceptTouchEvent(disallow);
+    }
   }
 
   @Override
