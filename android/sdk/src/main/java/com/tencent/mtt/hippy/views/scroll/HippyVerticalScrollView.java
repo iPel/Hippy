@@ -60,6 +60,7 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
   private int mLastY = 0;
   private int initialContentOffset = 0;
   private boolean hasCompleteFirstBatch = false;
+  private boolean mDisallowInterceptTouchEvent = true;
 
   public HippyVerticalScrollView(Context context) {
     super(context);
@@ -121,7 +122,7 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
         HippyScrollViewEventHelper.emitScrollBeginDragEvent(this);
       }
       // 当手指触摸listview时，让父控件交出ontouch权限,不能滚动
-      setParentScrollableIfNeed(false);
+      setParentScrollableIfNeed();
     } else if (action == MotionEvent.ACTION_UP && mDragging) {
       if (mScrollEndDragEventEnable) {
         HippyScrollViewEventHelper.emitScrollEndDragEvent(this);
@@ -136,8 +137,6 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
              }
         );
       }
-      // 当手指松开时，让父控件重新获取onTouch权限
-      setParentScrollableIfNeed(true);
       mDragging = false;
     }
 
@@ -170,10 +169,13 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
   }
 
   // 设置父控件是否可以获取到触摸处理权限
-  private void setParentScrollableIfNeed(boolean flag) {
+  private void setParentScrollableIfNeed() {
+    if (!mDisallowInterceptTouchEvent) {
+      return;
+    }
     // 若自己能上下滚动
     if (canScrollVertically(-1) || canScrollVertically(1)) {
-      getParent().requestDisallowInterceptTouchEvent(!flag);
+      getParent().requestDisallowInterceptTouchEvent(true);
     }
   }
 
@@ -344,5 +346,9 @@ public class HippyVerticalScrollView extends ScrollView implements HippyViewBase
     }
 
     hasCompleteFirstBatch = true;
+  }
+
+  public void setDisallowInterceptTouchEvent(boolean disallow) {
+    mDisallowInterceptTouchEvent = disallow;
   }
 }
