@@ -642,6 +642,7 @@ public abstract class BaseLayoutManager extends RecyclerViewBase.LayoutManager
 					suspensionViewHolder.setIsRecyclable(true);
 				}
 			}
+			mCurrentSuspentionView = null;
 			removeAndRecycleScrapInt(recycler, true, true);
 		}
 		final int extraForStart;
