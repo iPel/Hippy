@@ -16,6 +16,8 @@
 
 package com.tencent.mtt.hippy.bridge;
 
+import android.os.SystemClock;
+import android.util.Log;
 import com.tencent.mtt.hippy.HippyEngine;
 import com.tencent.mtt.hippy.HippyEngine.V8InitParams;
 import com.tencent.mtt.hippy.HippyEngineContext;
@@ -86,6 +88,20 @@ public class HippyBridgeImpl implements HippyBridge, DevRemoteDebugProxy.OnRecei
     private BinaryReader mSafeDirectReader;
     private final HippyEngine.V8InitParams v8InitParams;
     private Inspector mInspector;
+//    private long callJsSerializeTime = 0;
+//    private long callJsSerializeMaxSection = 0;
+//    private long callJsDeserializeTime = 0;
+//    private long callJsDeserializeMaxSection = 0;
+//    private long callJsInvokeTime = 0;
+//    private long callJsInvokeMaxSection = 0;
+//    private long callJsCount = 0;
+    private long callNativeSerializeTime = 0;
+    private long callNativeSerializeMaxSection = 0;
+    private long callNativeDeserializeTime = 0;
+    private long callNativeDeserializeMaxSection = 0;
+    private long callNativeInvokeTime = 0;
+    private long callNativeInvokeMaxSection = 0;
+    private long callNativeCount = 0;
 
     public HippyBridgeImpl(HippyEngineContext engineContext, BridgeCallback callback,
             boolean singleThreadMode, boolean enableV8Serialization, boolean isDevModule,
@@ -302,17 +318,38 @@ public class HippyBridgeImpl implements HippyBridge, DevRemoteDebugProxy.OnRecei
 
     public native void onResourceReady(ByteBuffer output, long runtimeId, long resId);
 
-    public void callNatives(String moduleName, String moduleFunc, String callId, byte[] buffer) {
-        callNatives(moduleName, moduleFunc, callId, ByteBuffer.wrap(buffer));
+    public void callNatives(String moduleName, String moduleFunc, String callId, byte[] buffer, long serializeTime) {
+        callNatives(moduleName, moduleFunc, callId, ByteBuffer.wrap(buffer), serializeTime);
     }
 
     public void callNatives(String moduleName, String moduleFunc, String callId,
-            ByteBuffer buffer) {
+            ByteBuffer buffer, long serializeTime) {
         LogUtils.d("jni_callback",
                 "callNatives [moduleName:" + moduleName + " , moduleFunc: " + moduleFunc + "]");
         if (mBridgeCallback != null) {
+            long t1 = SystemClock.elapsedRealtimeNanos() / 1000;
             Object params = bytesToArgument(moduleName, moduleFunc, buffer);
+            long t2 = SystemClock.elapsedRealtimeNanos() / 1000;
             mBridgeCallback.callNatives(moduleName, moduleFunc, callId, params);
+            long t3 = SystemClock.elapsedRealtimeNanos() / 1000;
+            ++callNativeCount;
+            callNativeSerializeTime += serializeTime;
+            if (serializeTime > callNativeSerializeMaxSection) {
+                callNativeSerializeMaxSection = serializeTime;
+            }
+            long deserialize = t2 -t1;
+            callNativeDeserializeTime += deserialize;
+            if (deserialize > callNativeDeserializeMaxSection) {
+                callNativeDeserializeMaxSection = deserialize;
+            }
+            long invoke = t3 - t2;
+            callNativeInvokeTime += invoke;
+            if (invoke > callNativeInvokeMaxSection) {
+                callNativeInvokeMaxSection = invoke;
+            }
+            Log.e("pel", "callNativeSerialize count=" + callNativeCount + " total=" + callNativeSerializeTime + " avg=" + (double) callNativeSerializeTime / callNativeCount + " max=" + callNativeSerializeMaxSection);
+            Log.e("pel", "callNativeDeserialize count=" + callNativeCount + " total=" + callNativeDeserializeTime + " avg=" + (double) callNativeDeserializeTime / callNativeCount + " max=" + callNativeDeserializeMaxSection);
+            Log.e("pel", "callNativeInvoke count=" + callNativeCount + " total=" + callNativeInvokeTime + " avg=" + (double) callNativeInvokeTime / callNativeCount + " max=" + callNativeInvokeMaxSection);
         }
     }
 

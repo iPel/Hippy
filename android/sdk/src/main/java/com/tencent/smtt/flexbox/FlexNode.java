@@ -15,6 +15,8 @@
  */
 package com.tencent.smtt.flexbox;
 
+import android.os.SystemClock;
+import android.util.Log;
 import com.tencent.mtt.hippy.dom.flex.FlexAlign;
 import com.tencent.mtt.hippy.dom.flex.FlexCSSDirection;
 import com.tencent.mtt.hippy.dom.flex.FlexConstants;
@@ -34,6 +36,13 @@ import java.util.List;
 
 @SuppressWarnings({"unused", "JavaJniMissingFunction"})
 public class FlexNode implements FlexNodeAPI<FlexNode> {
+
+  private static long measureCount = 0;
+  private static long measureTime = 0;
+  private static long measureMaxSection = 0;
+  public static void logMeasure() {
+    Log.e("pel", "textMeasure count=" + measureCount + ", total=" + measureTime + ", avg=" + (double) measureTime / measureCount + ", max=" + measureMaxSection);
+  }
 
   private FlexNode mParent;
   private List<FlexNode> mChildren;
@@ -364,13 +373,20 @@ public class FlexNode implements FlexNodeAPI<FlexNode> {
     if (!isMeasureDefined()) {
       throw new RuntimeException("Measure function isn't defined!");
     }
-
-    return mMeasureFunction.measure(
+    long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
+    long result = mMeasureFunction.measure(
         this,
         width,
         FlexMeasureMode.fromInt(widthMode),
         height,
         FlexMeasureMode.fromInt(heightMode));
+    long castTime = SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
+    ++measureCount;
+    measureTime += castTime;
+    if (castTime > measureMaxSection) {
+      measureMaxSection = castTime;
+    }
+    return result;
   }
 
   public boolean isMeasureDefined() {

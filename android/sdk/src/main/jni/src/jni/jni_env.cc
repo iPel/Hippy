@@ -48,10 +48,10 @@ void JNIEnvironment::init(JavaVM* j_vm, JNIEnv* j_env) {
   wrapper_.j_call_natives_direct_method_id =
       j_env->GetMethodID(j_hippy_bridge_cls, "callNatives",
                          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/"
-                         "String;Ljava/nio/ByteBuffer;)V");
+                         "String;Ljava/nio/ByteBuffer;J)V");
   wrapper_.j_call_natives_method_id = j_env->GetMethodID(
       j_hippy_bridge_cls, "callNatives",
-      "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[B)V");
+      "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[BJ)V");
   wrapper_.j_report_exception_method_id =
       j_env->GetMethodID(j_hippy_bridge_cls, "reportException",
                          "(Ljava/lang/String;Ljava/lang/String;)V");

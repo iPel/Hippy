@@ -16,8 +16,10 @@
 package com.tencent.mtt.hippy.dom;
 
 
+import android.os.SystemClock;
 import android.text.Layout;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import com.tencent.mtt.hippy.HippyEngineContext;
 import com.tencent.mtt.hippy.HippyEngineLifecycleEventListener;
@@ -36,6 +38,7 @@ import com.tencent.mtt.hippy.utils.LogUtils;
 import com.tencent.mtt.hippy.utils.PixelUtil;
 import com.tencent.mtt.hippy.utils.UIThreadUtils;
 
+import com.tencent.smtt.flexbox.FlexNode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
@@ -782,6 +785,9 @@ public class DomManager implements HippyInstanceLifecycleEventListener,
     batch(false);
   }
 
+  private long callLayoutTime = 0;
+  private long callLayoutCount = 0;
+  private long callLayoutMaxSection = 0;
   public void batch(boolean isAnimation) {
     int rootNodeCount = mNodeRegistry.getRootNodeCount();
 
@@ -793,7 +799,14 @@ public class DomManager implements HippyInstanceLifecycleEventListener,
 
         LogUtils.d(TAG, " dom start  calculateLayout");
 
+        long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
         rootNode.calculateLayout();
+        long castTime = SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
+        ++callLayoutCount;
+        callLayoutTime += castTime;
+        if (castTime > callLayoutMaxSection) {
+          callLayoutMaxSection = castTime;
+        }
 
         applyLayoutAfter(rootNode);
 
@@ -803,6 +816,8 @@ public class DomManager implements HippyInstanceLifecycleEventListener,
         //				LogUtils.l(TAG, rootNode.toString());
       }
     }
+    Log.e("pel", "callLayout count=" + callLayoutCount + ", total=" + callLayoutTime + ", avg=" + (double) callLayoutTime / callLayoutCount + ", max=" + callLayoutMaxSection);
+    FlexNode.logMeasure();
 
     mTagsWithLayoutVisited.clear();
     LogUtils.d(TAG, "dom batch complete");

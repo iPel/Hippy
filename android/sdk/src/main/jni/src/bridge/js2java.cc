@@ -120,6 +120,7 @@ void CallJava(hippy::napi::CBDataTuple *data) {
     }
   }
 
+  auto serializeStart = std::chrono::system_clock::now();
   std::string buffer_data;
   if (info.Length() >= 4 && !info[3].IsEmpty() && info[3]->IsObject()) {
     if (runtime->IsEnableV8Serialization()) {
@@ -162,9 +163,10 @@ void CallJava(hippy::napi::CBDataTuple *data) {
         reinterpret_cast<const jbyte *>(buffer_data.c_str()));
     j_method = instance->GetMethods().j_call_natives_method_id;
   }
-
+  auto serializeEnd = std::chrono::system_clock::now();
+  auto serializeTime = std::chrono::duration_cast<std::chrono::microseconds>(serializeEnd - serializeStart).count();
   j_env->CallVoidMethod(runtime->GetBridge()->GetObj(), j_method, j_module_name,
-                        j_module_func, j_cb_id, j_buffer);
+                        j_module_func, j_cb_id, j_buffer, serializeTime);
   JNIEnvironment::ClearJEnvException(j_env);
 
   // delete local ref

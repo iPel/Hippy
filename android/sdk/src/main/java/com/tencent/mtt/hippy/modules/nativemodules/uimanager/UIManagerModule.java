@@ -15,6 +15,8 @@
  */
 package com.tencent.mtt.hippy.modules.nativemodules.uimanager;
 
+import android.os.SystemClock;
+import android.util.Log;
 import com.tencent.mtt.hippy.HippyEngineContext;
 import com.tencent.mtt.hippy.HippyRootView;
 import com.tencent.mtt.hippy.annotation.HippyMethod;
@@ -43,6 +45,18 @@ public class UIManagerModule extends HippyNativeModuleBase {
   final String NAME = "name";
   final String PROPS = "props";
   final String TAG_NAME = "tagName";
+  private long createBatchTime = 0;
+  private long updateBatchTime = 0;
+  private long deleteBatchTime = 0;
+  private long createTime = 0;
+  private long createCount = 0;
+  private long createMaxSection = 0;
+  private long updateTime = 0;
+  private long updateCount = 0;
+  private long updateMaxSection = 0;
+  private long deleteTime = 0;
+  private long deleteCount = 0;
+  private long deleteMaxSection = 0;
 
   public UIManagerModule(HippyEngineContext context) {
     super(context);
@@ -50,6 +64,7 @@ public class UIManagerModule extends HippyNativeModuleBase {
 
   @HippyMethod(name = "createNode")
   public void createNode(int rootID, HippyArray hippyArray) {
+    long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
     HippyRootView hippyRootView = mContext.getInstance(rootID);
     DomManager domManager = this.mContext.getDomManager();
     if (hippyArray != null && hippyRootView != null && domManager != null) {
@@ -70,11 +85,13 @@ public class UIManagerModule extends HippyNativeModuleBase {
         domManager.createNode(hippyRootView, rootID, tag, pTag, index, className, tagName, props);
       }
     }
+    createBatchTime += SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
   }
 
 
   @HippyMethod(name = "updateNode")
   public void updateNode(int rootID, HippyArray updateArray) {
+    long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
     HippyRootView hippyRootView = mContext.getInstance(rootID);
     DomManager domManager = this.mContext.getDomManager();
     if (updateArray != null && updateArray.size() > 0 && hippyRootView != null
@@ -90,10 +107,12 @@ public class UIManagerModule extends HippyNativeModuleBase {
         domManager.updateNode(id, props, hippyRootView);
       }
     }
+    updateBatchTime += SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
   }
 
   @HippyMethod(name = "deleteNode")
   public void deleteNode(int rootId, HippyArray delete) {
+    long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
     DomManager domManager = this.mContext.getDomManager();
     if (delete != null && delete.size() > 0 && domManager != null) {
       int len = delete.size();
@@ -106,7 +125,7 @@ public class UIManagerModule extends HippyNativeModuleBase {
         domManager.deleteNode(id);
       }
     }
-
+    deleteBatchTime += SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
   }
 
   @HippyMethod(name = "flushBatch")
@@ -164,6 +183,33 @@ public class UIManagerModule extends HippyNativeModuleBase {
     DomManager domManager = this.mContext.getDomManager();
     if (domManager != null) {
       domManager.renderBatchEnd();
+    }
+    if (createBatchTime > 0) {
+      ++createCount;
+      createTime += createBatchTime;
+      if (createBatchTime > createMaxSection) {
+        createMaxSection = createBatchTime;
+      }
+      createBatchTime = 0;
+      Log.e("pel", "createNode count=" + createCount + " total=" + createTime + " avg=" + (double) createTime / createCount + " max=" + createMaxSection);
+    }
+    if (updateBatchTime > 0) {
+      ++updateCount;
+      updateTime += updateBatchTime;
+      if (updateBatchTime > updateMaxSection) {
+        updateMaxSection = updateBatchTime;
+      }
+      updateBatchTime = 0;
+      Log.e("pel", "updateNode count=" + updateCount + " total=" + updateTime + " avg=" + (double) updateTime / updateCount + " max=" + updateMaxSection);
+    }
+    if (deleteBatchTime > 0) {
+      ++deleteCount;
+      deleteTime += deleteBatchTime;
+      if (deleteBatchTime > deleteMaxSection) {
+        deleteMaxSection = deleteBatchTime;
+      }
+      deleteBatchTime = 0;
+      Log.e("pel", "deleteNode count=" + deleteCount + " total=" + deleteTime + " avg=" + (double) deleteTime / deleteCount + " max=" + deleteMaxSection);
     }
   }
 
