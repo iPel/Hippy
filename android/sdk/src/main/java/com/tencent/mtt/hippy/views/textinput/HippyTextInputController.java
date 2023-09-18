@@ -70,6 +70,7 @@ public class HippyTextInputController extends HippyViewController<HippyTextInput
   public static final String COMMAND_getValue = "getValue";
   public static final String COMMAND_setValue = "setValue";
   public static final String COMMAND_KEYBOARD_DISMISS = "dissmiss";
+  public final long[] measureTime = new long[3];
 
   @Override
   protected View createViewImpl(Context context) {
@@ -78,7 +79,7 @@ public class HippyTextInputController extends HippyViewController<HippyTextInput
 
   @Override
   protected StyleNode createNode(boolean isVirtual) {
-    return new TextInputNode(isVirtual);
+    return new TextInputNode(isVirtual, measureTime);
   }
 
   @Override

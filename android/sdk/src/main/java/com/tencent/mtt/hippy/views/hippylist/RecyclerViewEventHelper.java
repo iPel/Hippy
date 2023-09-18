@@ -92,7 +92,8 @@ public class RecyclerViewEventHelper extends OnScrollListener implements OnLayou
             hippyRecyclerView.post(new Runnable() {
                 @Override
                 public void run() {
-                    new HippyViewEvent(INITIAL_LIST_READY).send(getParentView(), null);
+                    // FIXME
+                    // new HippyViewEvent(INITIAL_LIST_READY).send(getParentView(), null);
                 }
             });
         }

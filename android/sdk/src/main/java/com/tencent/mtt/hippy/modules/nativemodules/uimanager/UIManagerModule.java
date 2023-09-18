@@ -191,7 +191,7 @@ public class UIManagerModule extends HippyNativeModuleBase {
         createMaxSection = createBatchTime;
       }
       createBatchTime = 0;
-      Log.e("pel", "createNode count=" + createCount + " total=" + createTime + " avg=" + (double) createTime / createCount + " max=" + createMaxSection);
+      Log.e("pel", "createNode count=" + createCount + " total=" + createTime + " max=" + createMaxSection);
     }
     if (updateBatchTime > 0) {
       ++updateCount;
@@ -200,7 +200,7 @@ public class UIManagerModule extends HippyNativeModuleBase {
         updateMaxSection = updateBatchTime;
       }
       updateBatchTime = 0;
-      Log.e("pel", "updateNode count=" + updateCount + " total=" + updateTime + " avg=" + (double) updateTime / updateCount + " max=" + updateMaxSection);
+      Log.e("pel", "updateNode count=" + updateCount + " total=" + updateTime + " max=" + updateMaxSection);
     }
     if (deleteBatchTime > 0) {
       ++deleteCount;
@@ -209,7 +209,7 @@ public class UIManagerModule extends HippyNativeModuleBase {
         deleteMaxSection = deleteBatchTime;
       }
       deleteBatchTime = 0;
-      Log.e("pel", "deleteNode count=" + deleteCount + " total=" + deleteTime + " avg=" + (double) deleteTime / deleteCount + " max=" + deleteMaxSection);
+      Log.e("pel", "deleteNode count=" + deleteCount + " total=" + deleteTime + " max=" + deleteMaxSection);
     }
   }
 

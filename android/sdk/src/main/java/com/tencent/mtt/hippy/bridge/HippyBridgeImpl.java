@@ -347,9 +347,9 @@ public class HippyBridgeImpl implements HippyBridge, DevRemoteDebugProxy.OnRecei
             if (invoke > callNativeInvokeMaxSection) {
                 callNativeInvokeMaxSection = invoke;
             }
-            Log.e("pel", "callNativeSerialize count=" + callNativeCount + " total=" + callNativeSerializeTime + " avg=" + (double) callNativeSerializeTime / callNativeCount + " max=" + callNativeSerializeMaxSection);
-            Log.e("pel", "callNativeDeserialize count=" + callNativeCount + " total=" + callNativeDeserializeTime + " avg=" + (double) callNativeDeserializeTime / callNativeCount + " max=" + callNativeDeserializeMaxSection);
-            Log.e("pel", "callNativeInvoke count=" + callNativeCount + " total=" + callNativeInvokeTime + " avg=" + (double) callNativeInvokeTime / callNativeCount + " max=" + callNativeInvokeMaxSection);
+            Log.e("pel", "callNativeSerialize count=" + callNativeCount + " total=" + callNativeSerializeTime + " max=" + callNativeSerializeMaxSection);
+            Log.e("pel", "callNativeDeserialize count=" + callNativeCount + " total=" + callNativeDeserializeTime + " max=" + callNativeDeserializeMaxSection);
+            Log.e("pel", "callNativeInvoke count=" + callNativeCount + " total=" + callNativeInvokeTime + " max=" + callNativeInvokeMaxSection);
         }
     }
 

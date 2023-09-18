@@ -16,7 +16,6 @@
 package com.tencent.smtt.flexbox;
 
 import android.os.SystemClock;
-import android.util.Log;
 import com.tencent.mtt.hippy.dom.flex.FlexAlign;
 import com.tencent.mtt.hippy.dom.flex.FlexCSSDirection;
 import com.tencent.mtt.hippy.dom.flex.FlexConstants;
@@ -28,6 +27,7 @@ import com.tencent.mtt.hippy.dom.flex.FlexOverflow;
 import com.tencent.mtt.hippy.dom.flex.FlexPositionType;
 import com.tencent.mtt.hippy.dom.flex.FlexWrap;
 import com.tencent.mtt.hippy.dom.flex.FloatUtil;
+import com.tencent.mtt.hippy.dom.node.TextNode;
 import com.tencent.mtt.hippy.utils.I18nUtil;
 import com.tencent.smtt.flexbox.FlexNodeStyle.Edge;
 
@@ -36,13 +36,6 @@ import java.util.List;
 
 @SuppressWarnings({"unused", "JavaJniMissingFunction"})
 public class FlexNode implements FlexNodeAPI<FlexNode> {
-
-  private static long measureCount = 0;
-  private static long measureTime = 0;
-  private static long measureMaxSection = 0;
-  public static void logMeasure() {
-    Log.e("pel", "textMeasure count=" + measureCount + ", total=" + measureTime + ", avg=" + (double) measureTime / measureCount + ", max=" + measureMaxSection);
-  }
 
   private FlexNode mParent;
   private List<FlexNode> mChildren;
@@ -81,7 +74,18 @@ public class FlexNode implements FlexNodeAPI<FlexNode> {
 
   @CalledByNative
   private long measureFunc(float width, int widthMode, float height, int heightMode) {
-    return measure(width, widthMode, height, heightMode);
+    long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
+    long result = measure(width, widthMode, height, heightMode);
+    if (this instanceof TextNode) {
+      long castTime = SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
+      long[] measureTime = ((TextNode) this).measureTime;
+      ++measureTime[0];
+      measureTime[1] += castTime;
+      if (castTime > measureTime[2]) {
+        measureTime[2] = castTime;
+      }
+    }
+    return result;
   }
 
   protected String resultToString() {
@@ -373,20 +377,12 @@ public class FlexNode implements FlexNodeAPI<FlexNode> {
     if (!isMeasureDefined()) {
       throw new RuntimeException("Measure function isn't defined!");
     }
-    long startTime = SystemClock.elapsedRealtimeNanos() / 1000;
-    long result = mMeasureFunction.measure(
+    return mMeasureFunction.measure(
         this,
         width,
         FlexMeasureMode.fromInt(widthMode),
         height,
         FlexMeasureMode.fromInt(heightMode));
-    long castTime = SystemClock.elapsedRealtimeNanos() / 1000 - startTime;
-    ++measureCount;
-    measureTime += castTime;
-    if (castTime > measureMaxSection) {
-      measureMaxSection = castTime;
-    }
-    return result;
   }
 
   public boolean isMeasureDefined() {

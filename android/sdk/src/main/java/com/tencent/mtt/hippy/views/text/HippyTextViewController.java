@@ -31,6 +31,7 @@ import com.tencent.mtt.hippy.uimanager.HippyViewController;
 public class HippyTextViewController extends HippyViewController<HippyTextView> {
 
   public static final String CLASS_NAME = "Text";
+  public final long[] measureTime = new long[3];
 
   @Override
   protected View createViewImpl(Context context) {
@@ -63,7 +64,7 @@ public class HippyTextViewController extends HippyViewController<HippyTextView> 
 
   @Override
   protected StyleNode createNode(boolean virtual) {
-    return new TextNode(virtual);
+    return new TextNode(virtual, measureTime);
   }
 
   @Override

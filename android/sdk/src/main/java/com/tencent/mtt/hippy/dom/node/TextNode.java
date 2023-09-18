@@ -96,10 +96,11 @@ public class TextNode extends StyleNode {
   protected boolean mEnableScale = false;
 
   private WeakReference<HippyTextView> mTextViewWeakRefrence = null;
+  public final long[] measureTime;
 
-
-  public TextNode(boolean mIsVirtual) {
+  public TextNode(boolean mIsVirtual, long[] measureTime) {
     this.mIsVirtual = mIsVirtual;
+    this.measureTime = measureTime;
     if (!mIsVirtual) {
       setMeasureFunction(TEXT_MEASURE_FUNCTION);
     }

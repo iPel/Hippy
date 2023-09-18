@@ -18,6 +18,7 @@ package com.tencent.mtt.hippy.uimanager;
 import android.annotation.SuppressLint;
 import android.content.res.Resources.NotFoundException;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,8 @@ import com.tencent.mtt.hippy.utils.UIThreadUtils;
 import com.tencent.mtt.hippy.views.custom.HippyCustomPropsController;
 import com.tencent.mtt.hippy.views.list.HippyRecycler;
 import com.tencent.mtt.hippy.views.scroll.HippyHorizontalScrollView;
+import com.tencent.mtt.hippy.views.text.HippyTextViewController;
+import com.tencent.mtt.hippy.views.textinput.HippyTextInputController;
 import com.tencent.mtt.hippy.views.view.HippyViewGroupController;
 
 import java.lang.reflect.Field;
@@ -475,5 +478,28 @@ public class ControllerManager implements HippyInstanceLifecycleEventListener {
       }
     }
     mControllerRegistry.removeRootView(mId);
+  }
+
+  public void logMeasureTime() {
+    long count = 0;
+    long time = 0;
+    long maxSection = 0;
+    HippyViewController text = mControllerRegistry.getViewController(HippyTextViewController.CLASS_NAME);
+    if (text instanceof HippyTextViewController) {
+      long[] measureTime = ((HippyTextViewController) text).measureTime;
+      count = measureTime[0];
+      time = measureTime[1];
+      maxSection = measureTime[2];
+    }
+    HippyViewController textInput = mControllerRegistry.getViewController(HippyTextInputController.CLASS_NAME);
+    if (text instanceof HippyTextInputController) {
+      long[] measureTime = ((HippyTextInputController) textInput).measureTime;
+      count += measureTime[0];
+      time += measureTime[1];
+      if (measureTime[2] > maxSection) {
+        maxSection = measureTime[2];
+      }
+    }
+    Log.e("pel", "textMeasure count=" + count + " total=" + time + " max=" + maxSection);
   }
 }

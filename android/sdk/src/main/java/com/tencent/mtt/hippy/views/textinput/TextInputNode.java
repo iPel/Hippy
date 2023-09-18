@@ -38,8 +38,8 @@ public class TextInputNode extends TextNode implements FlexNodeAPI.MeasureFuncti
   private float[] mComputedPadding;
 
 
-  public TextInputNode(boolean isvurtla) {
-    super(isvurtla);
+  public TextInputNode(boolean isvurtla, long[] measureTime) {
+    super(isvurtla, measureTime);
     setMeasureFunction(this);
   }
 

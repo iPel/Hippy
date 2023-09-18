@@ -816,8 +816,8 @@ public class DomManager implements HippyInstanceLifecycleEventListener,
         //				LogUtils.l(TAG, rootNode.toString());
       }
     }
-    Log.e("pel", "callLayout count=" + callLayoutCount + ", total=" + callLayoutTime + ", avg=" + (double) callLayoutTime / callLayoutCount + ", max=" + callLayoutMaxSection);
-    FlexNode.logMeasure();
+    Log.e("pel", "callLayout count=" + callLayoutCount + " total=" + callLayoutTime + " max=" + callLayoutMaxSection);
+    mContext.getRenderManager().getControllerManager().logMeasureTime();
 
     mTagsWithLayoutVisited.clear();
     LogUtils.d(TAG, "dom batch complete");
