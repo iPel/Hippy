@@ -129,7 +129,9 @@ class LayoutNode {
   virtual void ResetLayoutCache() = 0;
 };
 
-std::shared_ptr<LayoutNode> CreateLayoutNode();
+std::shared_ptr<LayoutNode> CreateLayoutNode(void* layout_config);
+void* CreateLayoutConfig();
+void DestroyLayoutConfig(void* config);
 
 }  // namespace dom
 }  // namespace hippy

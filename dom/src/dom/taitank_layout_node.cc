@@ -203,7 +203,14 @@ static CSSDirection GetCSSDirectionFromEdge(Edge edge) {
   }
 }
 
-TaitankLayoutNode::TaitankLayoutNode() { Allocate(); }
+void SetGlobalScaleFactor(float scale_factor) {
+  auto global_config = ConfigGetDefault();
+  if (global_config) {
+    global_config->SetScaleFactor(scale_factor);
+  }
+}
+
+TaitankLayoutNode::TaitankLayoutNode(TaitankConfig* layout_config) { Allocate(layout_config); }
 
 TaitankLayoutNode::TaitankLayoutNode(TaitankNodeRef engine_node_) : engine_node_(engine_node_) {}
 
@@ -644,6 +651,7 @@ void TaitankLayoutNode::SetScaleFactor(float sacle_factor) {
   if (config) {
     config->SetScaleFactor(sacle_factor);
   }
+  SetGlobalScaleFactor(sacle_factor);
 }
 
 void TaitankLayoutNode::SetMaxWidth(float max_width) {
@@ -811,7 +819,9 @@ void TaitankLayoutNode::SetOverflow(OverflowType overflow_type) {
   engine_node_->MarkAsDirty();
 }
 
-void TaitankLayoutNode::Allocate() { engine_node_ = new TaitankNode(); }
+void TaitankLayoutNode::Allocate(TaitankConfig* layout_config) {
+  engine_node_ = layout_config ? new TaitankNode(layout_config) : new TaitankNode();
+}
 
 void TaitankLayoutNode::Deallocate() {
   if (engine_node_ == nullptr) return;
@@ -819,7 +829,21 @@ void TaitankLayoutNode::Deallocate() {
   engine_node_ = nullptr;
 }
 
-std::shared_ptr<LayoutNode> CreateLayoutNode() { return std::make_shared<TaitankLayoutNode>(); }
+std::shared_ptr<LayoutNode> CreateLayoutNode(void* layout_config) {
+  return std::make_shared<TaitankLayoutNode>((TaitankConfig*)layout_config);
+}
+
+void* CreateLayoutConfig() {
+  return new TaitankConfig();
+}
+
+void DestroyLayoutConfig(void* config) {
+  if (!config) {
+    return;
+  }
+  TaitankConfig *p = (TaitankConfig*)config;
+  delete p;
+}
 
 }  // namespace dom
 }  // namespace hippy

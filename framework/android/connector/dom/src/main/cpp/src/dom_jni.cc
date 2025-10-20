@@ -85,7 +85,8 @@ void CreateRoot(JNIEnv* j_env,
                 jint j_root_id,
                 jfloat j_density) {
   auto root_id = footstone::check::checked_numeric_cast<jint, uint32_t>(j_root_id);
-  auto root_node = std::make_shared<hippy::RootNode>(root_id);
+  auto layout_config = CreateLayoutConfig();
+  auto root_node = std::make_shared<hippy::RootNode>(root_id, layout_config);
   auto layout = root_node->GetLayoutNode();
   layout->SetScaleFactor(static_cast<float>(j_density));
   auto& persistent_map = RootNode::PersistentMap();

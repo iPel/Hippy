@@ -59,8 +59,9 @@ class RootNode : public DomNode {
   using EventCallback = std::function<void(const std::shared_ptr<DomEvent>&)>;
   using EventCallBackRunner = std::function<void(const std::shared_ptr<DomEvent>&)>;
 
-  RootNode(uint32_t id);
+  RootNode(uint32_t id, void* layout_config = nullptr);
   RootNode();
+  ~RootNode();
 
   inline std::weak_ptr<DomManager> GetDomManager() { return dom_manager_; }
   inline void SetDomManager(std::weak_ptr<DomManager> dom_manager) {
@@ -99,6 +100,8 @@ class RootNode : public DomNode {
     return persistent_map_;
   }
 
+  void* GetLayoutConfig() { return layout_config_; }
+
  private:
   static void MarkLayoutNodeDirty(const std::vector<std::shared_ptr<DomNode>>& nodes);
 
@@ -127,6 +130,9 @@ class RootNode : public DomNode {
   std::vector<std::shared_ptr<DomActionInterceptor>> interceptors_;
   std::shared_ptr<AnimationManager> animation_manager_;
   std::unique_ptr<DomNodeStyleDiffer> style_differ_;
+
+  // 布局引擎配置结构优先存在RootNode里，避免存在全局static区
+  void* layout_config_ = nullptr;
 
   static footstone::utils::PersistentObjectMap<uint32_t, std::shared_ptr<RootNode>> persistent_map_;
 };

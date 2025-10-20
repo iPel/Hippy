@@ -31,7 +31,7 @@ using namespace taitank;
 
 class TaitankLayoutNode : public LayoutNode, public std::enable_shared_from_this<TaitankLayoutNode> {
  public:
-  TaitankLayoutNode();
+  TaitankLayoutNode(TaitankConfig* layout_config);
 
   TaitankLayoutNode(TaitankNodeRef engine_node_);
 
@@ -382,7 +382,7 @@ class TaitankLayoutNode : public LayoutNode, public std::enable_shared_from_this
    * @brief 分配节点
    * @param overflow_type (OverflowVisible|OverflowHidden|OverflowScroll)
    */
-  void Allocate();
+  void Allocate(TaitankConfig* layout_config);
 
   /**
    * @brief 释放节点
