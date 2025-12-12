@@ -338,7 +338,10 @@ class Scope : public std::enable_shared_from_this<Scope> {
     class_template->constructor_wrapper = std::make_unique<FunctionWrapper>([](CallbackInfo& info, void* data) {
       auto scope_wrapper = reinterpret_cast<ScopeWrapper*>(std::any_cast<void*>(info.GetSlot()));
       auto scope = scope_wrapper->scope.lock();
-      FOOTSTONE_CHECK(scope);
+      FOOTSTONE_DCHECK(scope);
+      if (!scope || !scope->GetEngine().lock()) {
+        return;
+      }
       auto context = scope->GetContext();
 
       auto class_template = reinterpret_cast<ClassTemplate<T>*>(data);
