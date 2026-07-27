@@ -111,7 +111,7 @@ Vue3.0 默认开启 scoped 无需设置开关
 
 1. hippy-react 不再导出RNfqb、RNfqbRegister、RNfqbEventEmitter、RNfqbEventListener 方法
 
-2. hippy-react animation 模块不再有 destory() 方法的错误写法兼容，统一用 destroy()
+2. hippy-react animation 模块建议统一使用 destroy()；仍兼容历史错误写法 destory()（已标记废弃，后续可能移除）
 
 3. hippy-react animation 事件监听不再支持 onRNfqbAnimationXX  兼容写法，统一用 onHippyAnimationXX 或者 onAnimationXX
 

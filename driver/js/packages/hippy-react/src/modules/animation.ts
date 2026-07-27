@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+import { warn } from '../utils';
 import { repeatCountDict } from '../utils/animation';
 import { colorParse } from '../color';
 
@@ -167,6 +168,15 @@ class Animation implements HippyTypes.Animation {
       });
     }
     this.animation.start();
+  }
+
+  /**
+   * Use destroy() to destroy animation.
+   * @deprecated Keep for compatibility with the historical misspelling.
+   */
+  public destory() {
+    warn('Animation.destory() method will be deprecated soon, please use Animation.destroy() as soon as possible');
+    this.destroy();
   }
 
   /**
